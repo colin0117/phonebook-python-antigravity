@@ -3,6 +3,11 @@ import { Locator, Page } from '@playwright/test';
 export class AddContactModal {
   readonly page: Page;
   readonly modal: Locator;
+  readonly form: Locator;
+  readonly alert: Locator;
+  readonly closeIcon: Locator;
+
+  // Form Fields
   readonly firstNameInput: Locator;
   readonly lastNameInput: Locator;
   readonly phoneInput: Locator;
@@ -10,19 +15,30 @@ export class AddContactModal {
   readonly dateOfBirthInput: Locator;
   readonly categorySelect: Locator;
   readonly notesTextarea: Locator;
+
+  // Action Buttons
   readonly submitButton: Locator;
+  readonly cancelButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.modal = page.locator('#addContactModal');
-    this.firstNameInput = page.locator('#addContactForm input[name="first_name"]');
-    this.lastNameInput = page.locator('#addContactForm input[name="last_name"]');
-    this.phoneInput = page.locator('#addContactForm input[name="phone_number"]');
-    this.emailInput = page.locator('#addContactForm input[name="email"]');
-    this.dateOfBirthInput = page.locator('#addContactForm input[name="date_of_birth"]');
-    this.categorySelect = page.locator('#addContactForm select[name="category"]');
-    this.notesTextarea = page.locator('#addContactForm textarea[name="notes"]');
+    this.form = page.locator('#addContactForm');
+    this.alert = page.locator('#modalAlert');
+    this.closeIcon = this.modal.locator('button.delete');
+
+    // Form Fields
+    this.firstNameInput = this.form.locator('input[name="first_name"]');
+    this.lastNameInput = this.form.locator('input[name="last_name"]');
+    this.phoneInput = this.form.locator('input[name="phone_number"]');
+    this.emailInput = this.form.locator('input[name="email"]');
+    this.dateOfBirthInput = this.form.locator('input[name="date_of_birth"]');
+    this.categorySelect = this.form.locator('select[name="category"]');
+    this.notesTextarea = this.form.locator('textarea[name="notes"]');
+
+    // Action Buttons
     this.submitButton = this.modal.getByRole('button', { name: 'Save Contact' });
+    this.cancelButton = this.modal.getByRole('button', { name: 'Cancel' });
   }
 
   async fillField(field: string, value: string) {
@@ -59,6 +75,5 @@ export class AddContactModal {
 
   async attemptSubmit() {
     await this.submitButton.click();
-    await this.page.waitForTimeout(200);
   }
 }

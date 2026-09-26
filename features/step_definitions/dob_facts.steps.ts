@@ -21,10 +21,10 @@ Then('the pop-up should display a fun fact pulled from the web', async function 
 
 When('I click the refresh button for the next fun fact in the pop-up', async function (this: CustomWorld) {
   await this.phoneBookPage.btnModalNextDobFact.click();
-  await this.phoneBookPage.page.waitForTimeout(300);
 });
 
 Then('the pop-up should display an updated fun fact', async function (this: CustomWorld) {
+  await expect(this.phoneBookPage.dobModalFactText).not.toHaveText(this.initialFactText || '');
   const newText = await this.phoneBookPage.dobModalFactText.innerText();
   expect(newText.length, 'Expected refreshed fact text to be present').toBeGreaterThan(10);
   expect(newText, 'Expected refreshed fact to differ from initial fact').not.toEqual(this.initialFactText);

@@ -3,6 +3,12 @@ import { Locator, Page } from '@playwright/test';
 export class EditContactModal {
   readonly page: Page;
   readonly modal: Locator;
+  readonly form: Locator;
+  readonly alert: Locator;
+  readonly closeIcon: Locator;
+
+  // Form Fields
+  readonly idInput: Locator;
   readonly firstNameInput: Locator;
   readonly lastNameInput: Locator;
   readonly phoneInput: Locator;
@@ -10,11 +16,20 @@ export class EditContactModal {
   readonly dateOfBirthInput: Locator;
   readonly categorySelect: Locator;
   readonly notesTextarea: Locator;
+
+  // Action Buttons
   readonly saveButton: Locator;
+  readonly cancelButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.modal = page.locator('#editContactModal');
+    this.form = page.locator('#editContactForm');
+    this.alert = page.locator('#editModalAlert');
+    this.closeIcon = this.modal.locator('button.delete');
+
+    // Form Fields
+    this.idInput = page.locator('#edit_id');
     this.firstNameInput = page.locator('#edit_first_name');
     this.lastNameInput = page.locator('#edit_last_name');
     this.phoneInput = page.locator('#edit_phone_number');
@@ -22,7 +37,10 @@ export class EditContactModal {
     this.dateOfBirthInput = page.locator('#edit_date_of_birth');
     this.categorySelect = page.locator('#edit_category');
     this.notesTextarea = page.locator('#edit_notes');
+
+    // Action Buttons
     this.saveButton = this.modal.getByRole('button', { name: 'Save Changes' });
+    this.cancelButton = this.modal.getByRole('button', { name: 'Cancel' });
   }
 
   async fillField(field: string, value: string) {
@@ -76,6 +94,5 @@ export class EditContactModal {
 
   async attemptSubmit() {
     await this.saveButton.click();
-    await this.page.waitForTimeout(200);
   }
 }
