@@ -34,9 +34,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Test Reports & Playwright Artifacts
-reports/*.html
-reports/*.png
-reports/*.json
+**/reports/
+reports/
 test-results/
 playwright-report/
 blob-report/

@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import pymysql
@@ -7,7 +8,8 @@ import pymysql
 from db import init_db, get_connection
 from dob_facts import get_dob_fact, get_dob_details
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path=env_path)
 
 app = Flask(__name__)
 
@@ -82,6 +84,18 @@ def add_contact():
     if not first_name or not last_name or not phone_number:
         return jsonify({"status": "error", "message": "First name, last name, and phone number are required."}), 400
 
+    if len(first_name) > 100 or len(last_name) > 100:
+        return jsonify({"status": "error", "message": "First and last names cannot exceed 100 characters."}), 400
+
+    if len(phone_number) > 50:
+        return jsonify({"status": "error", "message": "Phone number cannot exceed 50 characters."}), 400
+
+    if date_of_birth:
+        try:
+            datetime.strptime(date_of_birth, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid date of birth format. Expected YYYY-MM-DD."}), 400
+
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -116,6 +130,18 @@ def update_contact(contact_id):
 
     if not first_name or not last_name or not phone_number:
         return jsonify({"status": "error", "message": "First name, last name, and phone number are required."}), 400
+
+    if len(first_name) > 100 or len(last_name) > 100:
+        return jsonify({"status": "error", "message": "First and last names cannot exceed 100 characters."}), 400
+
+    if len(phone_number) > 50:
+        return jsonify({"status": "error", "message": "Phone number cannot exceed 50 characters."}), 400
+
+    if date_of_birth:
+        try:
+            datetime.strptime(date_of_birth, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"status": "error", "message": "Invalid date of birth format. Expected YYYY-MM-DD."}), 400
 
     try:
         with get_connection() as conn:

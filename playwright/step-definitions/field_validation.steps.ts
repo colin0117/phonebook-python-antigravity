@@ -134,31 +134,3 @@ Then('the field {string} on the edit contact form should be invalid', async func
 Then('the "Edit Contact" modal should remain open', async function (this: CustomWorld) {
   await expect(this.phoneBookPage.editModal.modal).toBeVisible();
 });
-
-When('I send an API request to create a contact missing required fields:', async function (this: CustomWorld, dataTable: DataTable) {
-  const data = dataTable.rowsHash();
-  const response = await this.context.request.post('/api/contacts', { data });
-  this.lastApiResponse = response;
-});
-
-When('I request DOB facts without the "dob" parameter', async function (this: CustomWorld) {
-  const response = await this.context.request.get('/api/dob-facts');
-  this.lastApiResponse = response;
-});
-
-When('I request DOB facts with an invalid date {string}', async function (this: CustomWorld, invalidDob: string) {
-  const response = await this.context.request.get(`/api/dob-facts?dob=${encodeURIComponent(invalidDob)}`);
-  this.lastApiResponse = response;
-});
-
-Then('the API response status should be {int}', async function (this: CustomWorld, expectedStatus: number) {
-  expect(this.lastApiResponse).toBeDefined();
-  expect(this.lastApiResponse!.status()).toBe(expectedStatus);
-});
-
-Then('the API error message should contain {string}', async function (this: CustomWorld, expectedText: string) {
-  expect(this.lastApiResponse).toBeDefined();
-  const json = await this.lastApiResponse!.json();
-  expect(json.status).toBe('error');
-  expect(json.message.toLowerCase()).toContain(expectedText.toLowerCase());
-});

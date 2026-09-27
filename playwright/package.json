@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "BDD Playwright Cucumber TypeScript test suite for Phone Book App",
   "scripts": {
-    "test": "cucumber-js",
+    "test": "npm run test:api && npm run test:e2e",
+    "test:api": "playwright test",
+    "test:e2e": "cucumber-js",
     "test:headed": "HEADED=true cucumber-js",
-    "test:report": "cucumber-js --format html:reports/cucumber-report.html"
+    "test:report": "cucumber-js --format html:reports/cucumber-report.html",
+    "test:api:report": "playwright show-report reports/playwright-html"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.2.0",

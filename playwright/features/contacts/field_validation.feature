@@ -143,28 +143,3 @@ Feature: Contact Field Display and Validation Verification
     And I attempt to submit the edit contact form
     Then the field "First Name" on the edit contact form should be invalid
     And the "Edit Contact" modal should remain open
-
-  Scenario: 10. Backend API rejects contact creation with missing required fields
-    When I send an API request to create a contact missing required fields:
-      | last_name    | ApiMissingFirstTest |
-      | phone_number | +1 (555) 005-5555   |
-    Then the API response status should be 400
-    And the API error message should contain "required"
-    When I send an API request to create a contact missing required fields:
-      | first_name   | ApiMissingLastTest |
-      | phone_number | +1 (555) 005-5555  |
-    Then the API response status should be 400
-    And the API error message should contain "required"
-    When I send an API request to create a contact missing required fields:
-      | first_name | ApiMissingPhoneTest |
-      | last_name  | ApiValidationTest   |
-    Then the API response status should be 400
-    And the API error message should contain "required"
-
-  Scenario: 11. Date of Birth API validates query parameter requirements
-    When I request DOB facts without the "dob" parameter
-    Then the API response status should be 400
-    And the API error message should contain "required"
-    When I request DOB facts with an invalid date "invalid-date-string"
-    Then the API response status should be 400
-    And the API error message should contain "Invalid date"

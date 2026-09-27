@@ -8,7 +8,14 @@ A modern, responsive web application built with **Flask (Python 3)**, **MySQL**,
 
 ```text
 phonebook/
-├── playwright/                  # BDD Automated Test Suite (Playwright + TypeScript + Cucumber)
+├── playwright/                  # Test Suites (Playwright API + Cucumber BDD E2E)
+│   ├── tests/api/               # Fast REST API & Concurrency Test Suite
+│   │   ├── api-types.ts         # TypeScript interfaces for API schemas & responses
+│   │   ├── contacts-crud.spec.ts # CRUD tests (/api/contacts GET, POST, PUT, DELETE)
+│   │   ├── contacts-validation.spec.ts # Input validation, required fields, 400 & 404
+│   │   ├── dob-facts.spec.ts    # Date facts & star sign queries (/api/dob-facts)
+│   │   ├── contacts-security-boundary.spec.ts # Security, SQL injection, unicode & boundaries
+│   │   └── concurrency-perf.spec.ts # 10 concurrent users (status, content integrity, SLA)
 │   ├── features/                # Gherkin .feature files grouped by domain/module
 │   │   ├── contacts/            # CRUD, validation, and responsive features
 │   │   │   ├── crud.feature
@@ -150,66 +157,79 @@ CREATE TABLE IF NOT EXISTS `contacts` (
 
 SQL definitions and initial sample seed data are located in [`python/setup_db.sql`](./python/setup_db.sql) and [`python/sample_data.py`](./python/sample_data.py).
 
+## 🧪 Automated Test Suites
+
+The project includes two complementary automated testing suites located under `playwright/`:
+1. **Playwright REST API & Concurrency Suite** (Fast HTTP-level integration, contract, validation, and 10-user concurrency tests).
+2. **Cucumber BDD End-to-End Suite** (Browser automation testing Bulma UI, DataTables, modals, and responsive views).
+
 ---
 
-## 🧪 Automated BDD Test Suite (Cucumber + Playwright + TypeScript)
+### 1. REST API & Concurrency Test Suite (Playwright Test)
 
-A complete end-to-end BDD automated test suite built with **Cucumber.js**, **Playwright**, and **TypeScript** resides in `playwright/`.
+Located in [`playwright/tests/api/`](./playwright/tests/api/):
 
-### Test Coverage (22 Scenarios / 171 Steps — 100% Passing)
+- **[`contacts-crud.spec.ts`](./playwright/tests/api/contacts-crud.spec.ts)**:
+  - `GET /api/contacts`: Returns full contact directory with HTTP 200, validated JSON schema, and correct field types.
+  - `POST /api/contacts`: Creates contacts with complete details and verifies HTTP 201, numeric ID, and returned `dob_details` with star sign and facts.
+  - `PUT /api/contacts/:id`: Updates existing contact fields and verifies updated data is persisted in MySQL.
+  - `DELETE /api/contacts/:id`: Deletes contact and verifies HTTP 200, removal from directory, and subsequent HTTP 404 on re-attempt.
 
-- **[`playwright/features/contacts/crud.feature`](./playwright/features/contacts/crud.feature)**:
-  - Directory loading and summary stat synchronization.
-  - Adding contacts with full details including Date of Birth.
-  - Editing contact information and saving changes.
-  - **Delete confirmation validation**: Verifies browser confirmation prompt `'Are you sure you want to delete contact "..."?'`.
-  - **Cancel delete prompt**: Verifies that canceling leaves the contact safely in the directory.
-  - **Confirm delete prompt**: Verifies that confirming deletion permanently removes the contact.
+- **[`contacts-validation.spec.ts`](./playwright/tests/api/contacts-validation.spec.ts)**:
+  - Missing mandatory fields (`first_name`, `last_name`, `phone_number`) enforce HTTP 400 Bad Request.
+  - Empty or whitespace-only inputs enforce HTTP 400 Bad Request.
+  - Optional fields (`email`, `date_of_birth`, `notes`) can be omitted safely, defaulting category to `General`.
+  - Non-existent IDs on `PUT` and `DELETE` enforce HTTP 404 Not Found.
 
-- **[`playwright/features/birthday-insights/dob_facts.feature`](./playwright/features/birthday-insights/dob_facts.feature)**:
-  - Automatic display of the centered Birthday Insights pop-up on adding contacts with Date of Birth.
-  - Verification of web fun facts pulled via API.
-  - Interactive "Next Fun Fact" cycling in the pop-up.
-  - Astrological star sign verification on new and updated contacts.
+- **[`dob-facts.spec.ts`](./playwright/tests/api/dob-facts.spec.ts)**:
+  - `GET /api/dob-facts?dob=YYYY-MM-DD`: Verifies star sign calculation, astrological symbols (♈, ♋, ♑, etc.), personality traits, formatted dates, and historical facts.
+  - Rejects missing, empty, or malformed `dob` parameters with HTTP 400 Bad Request.
+  - Rejects invalid calendar dates (e.g. `2024-02-31`) with HTTP 400 Bad Request.
 
-- **[`playwright/features/contacts/field_validation.feature`](./playwright/features/contacts/field_validation.feature)**:
-  - Header column verification (`#`, `Name`, `Phone Number`, `Email`, `Date of Birth`, `Category`, `Notes`, `Actions`).
-  - Add & Edit modal input fields and Category options verification.
-  - Pre-population verification on editing existing records.
-  - **First Name validation**: Form validation blocks submission when First Name is missing and keeps modal open.
-  - **Last Name validation**: Form validation blocks submission when Last Name is missing and keeps modal open.
-  - **Phone Number validation**: Form validation blocks submission when Phone Number is missing and keeps modal open.
-  - **Email format validation**: Form validates email format when provided.
-  - **Optional fields validation**: Verifies that optional fields (`email`, `date_of_birth`, `notes`) can be omitted.
-  - **Edit form validation**: Prevents saving edits when required fields are cleared.
-  - **Backend API validation**: Enforces HTTP 400 Bad Request error when required fields are missing on `POST /api/contacts`.
-  - **Date of Birth query validation**: Enforces HTTP 400 Bad Request for missing or malformed `dob` parameter on `/api/dob-facts`.
+- **[`contacts-security-boundary.spec.ts`](./playwright/tests/api/contacts-security-boundary.spec.ts)**:
+  - **Date of Birth Validation**: Rejects invalid format (`not-a-date`) and invalid calendar dates (`2025-02-31`) on both POST and PUT with HTTP 400 Bad Request.
+  - **Length Boundary Enforcement**: Enforces VARCHAR(100) name limits with HTTP 400 Bad Request.
+  - **SQL Injection Defense**: Parameterized queries safely store injection payloads (`Robert'); DROP TABLE contacts;--`, quotes, apostrophes) literally as strings without SQL errors or data loss.
+  - **Unicode & UTF-8**: Full `utf8mb4` fidelity verification for international names (`Zoë 🌺`, `Müller-Świętochowski`, Arabic, Japanese).
+  - **XSS Script Preservation**: Safe transmission and storage of `<script>` tags in JSON without script execution.
 
-- **[`playwright/features/contacts/responsive.feature`](./playwright/features/contacts/responsive.feature)**:
-  - Viewport resizing to mobile (`500x800`).
-  - Verification that essential columns (`Name`, `Phone`, `Actions`) remain visible while secondary columns collapse into the responsive container.
-  - Expanding the responsive child container and verifying collapsed field values.
-  - Updating contacts directly from responsive viewports.
-  - Switching to Card View mode and ensuring all 8 fields are rendered cleanly in multi-column grid cards.
+- **[`concurrency-perf.spec.ts`](./playwright/tests/api/concurrency-perf.spec.ts)** (10 Concurrent Users Performance & Integrity):
+  - **10 Concurrent Readers**: Fires 10 simultaneous `GET /api/contacts` requests; asserts HTTP 200, identical contact counts, matching record IDs, zero data corruption, and sub-second execution.
+  - **10 Concurrent Writers**: 10 simultaneous users submit unique contacts; asserts HTTP 201, 10 unique IDs (zero auto-increment collisions), accurate star signs, and verifies all 10 records are persisted in MySQL.
+  - **10 Concurrent Independent User Sessions**: 10 parallel user pipelines executing Create -> Read Facts -> Update -> Verify Update -> Delete -> 404 check concurrently without cross-user interference.
+  - **Latency SLA Benchmarking**: Measures Min, Max, Average, and P95 latency across concurrent requests (enforces < 350ms average latency SLA).
 
-### Running Tests
+---
 
-You can run tests directly from the project root or from inside `playwright/`:
+### 2. Browser E2E BDD Suite (Cucumber + Playwright)
+
+Located in [`playwright/features/`](./playwright/features/):
+
+- **[`crud.feature`](./playwright/features/contacts/crud.feature)**: Directory loading, adding/editing contacts, browser delete confirmation dialog handling.
+- **[`dob_facts.feature`](./playwright/features/birthday-insights/dob_facts.feature)**: Centered Birthday Insights modal display, web facts cycling, and star signs.
+- **[`field_validation.feature`](./playwright/features/contacts/field_validation.feature)**: UI modal form validation, column headers, and optional fields.
+- **[`responsive.feature`](./playwright/features/contacts/responsive.feature)**: Mobile responsive collapsing child rows (`500x800`) and CSS grid Card View.
+
+---
+
+### 🚀 Running the Tests
+
+You can run test suites from the project root or from inside `playwright/`:
 
 ```bash
-# Run all 22 scenarios headless (from root)
+# Run BOTH suites (API tests + Cucumber E2E tests)
 npm test
 
-# Run tests with visible browser window (from root)
+# Run ONLY the fast Playwright API & Concurrency tests (~2 seconds)
+npm run test:api
+
+# Run ONLY the Cucumber browser BDD suite
+npm run test:e2e
+
+# Run browser tests with visible browser window
 npm run test:headed
 
-# Run tests and generate an HTML report (from root)
-npm run test:report
-
-# Or run directly from playwright/ directory
-cd playwright
-npm test
-npm run test:report
+# Generate & view HTML reports
+npm run test:report         # Cucumber HTML report
+npm run test:api:report     # Playwright API HTML report
 ```
-
-The generated HTML report is available at [`playwright/reports/cucumber-report.html`](./playwright/reports/cucumber-report.html).

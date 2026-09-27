@@ -4,6 +4,8 @@
   "description": "Phone Book Web Application with Flask and Playwright BDD test suite",
   "scripts": {
     "test": "npm --prefix playwright test",
+    "test:api": "npm --prefix playwright run test:api",
+    "test:e2e": "npm --prefix playwright run test:e2e",
     "test:headed": "npm --prefix playwright run test:headed",
     "test:report": "npm --prefix playwright run test:report"
   },
