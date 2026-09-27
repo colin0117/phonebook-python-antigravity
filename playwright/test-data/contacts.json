@@ -1,0 +1,29 @@
+{
+  "validContact": {
+    "first_name": "Ada",
+    "last_name": "Lovelace-Create",
+    "phone_number": "+1 (555) 111-2222",
+    "email": "ada@create-test.org",
+    "date_of_birth": "1995-12-10",
+    "category": "Work",
+    "notes": "Create test isolation"
+  },
+  "minimalContact": {
+    "first_name": "Minimal",
+    "last_name": "ContactTest",
+    "phone_number": "+1 (555) 003-3333"
+  },
+  "invalidEmail": {
+    "first_name": "EmailFormat",
+    "last_name": "ValidationTest",
+    "phone_number": "+1 (555) 007-7777",
+    "email": "not-a-valid-email"
+  },
+  "categories": [
+    "Work",
+    "Family",
+    "Friend",
+    "Services",
+    "General"
+  ]
+}
