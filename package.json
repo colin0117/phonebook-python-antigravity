@@ -1,11 +1,11 @@
 {
-  "name": "phonebook-e2e-tests",
+  "name": "phonebook-directory",
   "version": "1.0.0",
-  "description": "BDD Playwright Cucumber TypeScript test suite for Phone Book App",
+  "description": "Phone Book Web Application with Flask and Playwright BDD test suite",
   "scripts": {
-    "test": "cucumber-js",
-    "test:headed": "HEADED=true cucumber-js",
-    "test:report": "cucumber-js --format html:reports/cucumber-report.html"
+    "test": "npm --prefix playwright test",
+    "test:headed": "npm --prefix playwright run test:headed",
+    "test:report": "npm --prefix playwright run test:report"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.2.0",

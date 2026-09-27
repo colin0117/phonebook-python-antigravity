@@ -1,6 +1,64 @@
 # 📞 Phone Book Web Application
 
-A modern, responsive web application built with **Flask (Python 3)**, **MySQL**, **[Bulma CSS 1.0.2](https://bulma.io/)**, and **[DataTables.net 2.x](https://datatables.net/)**.
+A modern, responsive web application built with **Flask (Python 3)**, **MySQL**, **[Bulma CSS 1.0.2](https://bulma.io/)**, and **[DataTables.net 2.x](https://datatables.net/)**, with a modular **Playwright + Cucumber BDD** automated test suite.
+
+---
+
+## 📁 Project Directory Structure
+
+```text
+phonebook/
+├── playwright/                  # BDD Automated Test Suite (Playwright + TypeScript + Cucumber)
+│   ├── features/                # Gherkin .feature files grouped by domain/module
+│   │   ├── contacts/            # CRUD, validation, and responsive features
+│   │   │   ├── crud.feature
+│   │   │   ├── field_validation.feature
+│   │   │   └── responsive.feature
+│   │   └── birthday-insights/   # Birthday discovery & web facts feature
+│   │       └── dob_facts.feature
+│   ├── step-definitions/        # Step implementation files mapping to features
+│   │   ├── crud.steps.ts
+│   │   ├── dob_facts.steps.ts
+│   │   ├── field_validation.steps.ts
+│   │   └── responsive.steps.ts
+│   ├── pages/                   # Page Object Model (POM) classes
+│   │   ├── base.page.ts         # Shared base page object
+│   │   ├── phone-book.page.ts   # Main directory & table page object
+│   │   ├── add-contact-modal.page.ts # Add contact modal page object
+│   │   ├── edit-contact-modal.page.ts # Edit contact modal page object
+│   │   └── index.ts             # Barrel exports
+│   ├── fixtures/                # Custom Playwright test and BDD fixtures
+│   │   └── bdd-fixtures.ts
+│   ├── support/                 # Global setup, teardown, and cucumber hooks
+│   │   ├── hooks.ts
+│   │   └── world.ts
+│   ├── utils/                   # Reusable helper functions and API clients
+│   │   └── api-helper.ts
+│   ├── test-data/               # Test input data fixtures
+│   │   └── contacts.json
+│   ├── playwright.config.ts     # Playwright configuration file
+│   ├── cucumber.js              # Cucumber configuration file
+│   ├── cucumber.json            # Cucumber JSON configuration
+│   ├── tsconfig.json            # TypeScript configuration
+│   └── package.json             # Test dependencies and scripts
+│
+├── python/                      # Server-Side Application & REST API
+│   ├── app.py                   # Flask REST API and web server
+│   ├── db.py                    # MySQL connection management, schema initialization and migrations
+│   ├── dob_facts.py             # Live Wikipedia facts engine & astrological star signs
+│   ├── sample_data.py           # Initial seed contact dataset
+│   ├── setup_db.sql             # MySQL database schema and seed data
+│   ├── requirements.txt         # Python package dependencies
+│   ├── .env.example             # Environment configuration template
+│   ├── static/                  # Static assets
+│   │   └── style.css            # Custom Bulma styling, card view grid, and animations
+│   └── templates/               # Jinja2 HTML templates
+│       └── index.html           # Bulma UI, DataTables markup, and modals
+│
+├── package.json                 # Root convenience scripts delegating to playwright/
+├── .gitignore                   # Excludes venv, .env, node_modules, reports, caches
+└── README.md                    # Project documentation
+```
 
 ---
 
@@ -41,7 +99,7 @@ When a contact is added or edited with a **Date of Birth**, a modal pop-up immed
 ## 🚀 Quick Start
 
 ### 1. Configure MySQL Credentials
-Edit `.env` inside the project directory:
+Edit `python/.env` (copy from `python/.env.example` if needed):
 
 ```ini
 DB_HOST=127.0.0.1
@@ -49,22 +107,22 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=phonebook_db
+PORT=5000
+FLASK_DEBUG=1
 ```
 
 ### 2. Activate Virtual Environment & Start Server
-The project includes a pre-configured Python virtual environment (`venv`).
 
+From the project root:
 ```bash
-# Activate virtual environment
-source venv/bin/activate
-
-# Start the Flask web application
-python app.py
+# Using the virtual environment
+venv/bin/python python/app.py
 ```
 
-Or run directly with the virtualenv Python binary:
+Or from the `python/` directory:
 ```bash
-venv/bin/python app.py
+cd python
+../venv/bin/python app.py
 ```
 
 ### 3. Open in Browser
@@ -90,31 +148,31 @@ CREATE TABLE IF NOT EXISTS `contacts` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-SQL definitions and initial sample seed data can also be viewed in [`setup_db.sql`](./setup_db.sql) and [`sample_data.py`](./sample_data.py).
+SQL definitions and initial sample seed data are located in [`python/setup_db.sql`](./python/setup_db.sql) and [`python/sample_data.py`](./python/sample_data.py).
 
 ---
 
 ## 🧪 Automated BDD Test Suite (Cucumber + Playwright + TypeScript)
 
-A complete end-to-end BDD automated test suite built with **Cucumber.js**, **Playwright**, and **TypeScript** resides in `features/`.
+A complete end-to-end BDD automated test suite built with **Cucumber.js**, **Playwright**, and **TypeScript** resides in `playwright/`.
 
 ### Test Coverage (22 Scenarios / 171 Steps — 100% Passing)
 
-- **[`crud.feature`](./features/crud.feature)**:
+- **[`playwright/features/contacts/crud.feature`](./playwright/features/contacts/crud.feature)**:
   - Directory loading and summary stat synchronization.
   - Adding contacts with full details including Date of Birth.
   - Editing contact information and saving changes.
-  - **Delete confirmation validation**: Verifies that clicking delete triggers browser confirmation prompt `Are you sure you want to delete contact "..."?`.
-  - **Cancel delete prompt**: Verifies that dismissing/canceling the confirmation leaves the contact safely in the directory.
+  - **Delete confirmation validation**: Verifies browser confirmation prompt `'Are you sure you want to delete contact "..."?'`.
+  - **Cancel delete prompt**: Verifies that canceling leaves the contact safely in the directory.
   - **Confirm delete prompt**: Verifies that confirming deletion permanently removes the contact.
 
-- **[`dob_facts.feature`](./features/dob_facts.feature)**:
+- **[`playwright/features/birthday-insights/dob_facts.feature`](./playwright/features/birthday-insights/dob_facts.feature)**:
   - Automatic display of the centered Birthday Insights pop-up on adding contacts with Date of Birth.
   - Verification of web fun facts pulled via API.
   - Interactive "Next Fun Fact" cycling in the pop-up.
   - Astrological star sign verification on new and updated contacts.
 
-- **[`field_validation.feature`](./features/field_validation.feature)**:
+- **[`playwright/features/contacts/field_validation.feature`](./playwright/features/contacts/field_validation.feature)**:
   - Header column verification (`#`, `Name`, `Phone Number`, `Email`, `Date of Birth`, `Category`, `Notes`, `Actions`).
   - Add & Edit modal input fields and Category options verification.
   - Pre-population verification on editing existing records.
@@ -127,7 +185,7 @@ A complete end-to-end BDD automated test suite built with **Cucumber.js**, **Pla
   - **Backend API validation**: Enforces HTTP 400 Bad Request error when required fields are missing on `POST /api/contacts`.
   - **Date of Birth query validation**: Enforces HTTP 400 Bad Request for missing or malformed `dob` parameter on `/api/dob-facts`.
 
-- **[`responsive.feature`](./features/responsive.feature)**:
+- **[`playwright/features/contacts/responsive.feature`](./playwright/features/contacts/responsive.feature)**:
   - Viewport resizing to mobile (`500x800`).
   - Verification that essential columns (`Name`, `Phone`, `Actions`) remain visible while secondary columns collapse into the responsive container.
   - Expanding the responsive child container and verifying collapsed field values.
@@ -136,15 +194,22 @@ A complete end-to-end BDD automated test suite built with **Cucumber.js**, **Pla
 
 ### Running Tests
 
+You can run tests directly from the project root or from inside `playwright/`:
+
 ```bash
-# Run all 22 scenarios headless
+# Run all 22 scenarios headless (from root)
 npm test
 
-# Run tests with visible browser window
+# Run tests with visible browser window (from root)
 npm run test:headed
 
-# Run tests and generate an HTML report
+# Run tests and generate an HTML report (from root)
+npm run test:report
+
+# Or run directly from playwright/ directory
+cd playwright
+npm test
 npm run test:report
 ```
 
-The generated HTML report is available at [`reports/cucumber-report.html`](./reports/cucumber-report.html).
+The generated HTML report is available at [`playwright/reports/cucumber-report.html`](./playwright/reports/cucumber-report.html).
