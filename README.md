@@ -4,10 +4,26 @@ A modern, responsive web application built with **Flask (Python 3)**, **MySQL**,
 
 ---
 
+## 📸 Application Screenshots
+
+### 📇 Main Contacts Directory Screen
+*Interactive DataTables with Bulma styling, Category SearchPanes filter, multi-format export buttons, summary stat cards, and instant search.*
+
+![Main Contacts Directory Screen](./docs/screenshots/main-directory.png)
+
+### 🎂 Centered Birthday Insights Pop-up Modal
+*Triggered automatically upon adding or editing contacts with a Date of Birth, featuring live web historical facts and astrological star signs.*
+
+![Birthday Insights Modal](./docs/screenshots/birthday-insights.png)
+
+---
+
 ## 📁 Project Directory Structure
 
 ```text
 phonebook/
+├── docs/                        # Documentation and visual assets
+│   └── screenshots/             # High-resolution application screenshots
 ├── playwright/                  # Test Suites (Playwright API + Cucumber BDD E2E)
 │   ├── tests/api/               # Fast REST API & Concurrency Test Suite
 │   │   ├── api-types.ts         # TypeScript interfaces for API schemas & responses
