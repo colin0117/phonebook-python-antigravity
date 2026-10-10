@@ -1,7 +1,7 @@
 Feature: Contact Field Display and Validation Verification
   As a phone book user and system administrator
   I want to verify that all contact fields are properly displayed
-  And ensure that field validation rules are enforced across UI and API
+  So that field validation rules are enforced across the UI
 
   Scenario: 1. Verify all fields are displayed in the contacts table
     Given I navigate to the phone book application

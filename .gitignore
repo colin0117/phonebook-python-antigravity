@@ -42,7 +42,11 @@ blob-report/
 playwright/.cache/
 
 # IDE & Text Editors
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+playwright/.vscode/*
+!playwright/.vscode/settings.json
 .idea/
 *.sublime-project
 *.sublime-workspace

@@ -1,31 +1,6 @@
-import { Given, When, Then, DataTable } from '@cucumber/cucumber';
+import { When, Then, DataTable } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { CustomWorld } from '../support/world';
-
-// Precondition step for self-contained test fixtures
-Given('a contact exists named {string} with phone {string}', async function (this: CustomWorld, fullName: string, phone: string) {
-  const parts = fullName.trim().split(' ');
-  const firstName = parts[0];
-  const lastName = parts.slice(1).join(' ') || 'Test';
-
-  const response = await this.context.request.post('/api/contacts', {
-    data: {
-      first_name: firstName,
-      last_name: lastName,
-      phone_number: phone,
-      email: `${firstName.toLowerCase()}@fixture.test`,
-      date_of_birth: '1990-05-15',
-      category: 'Work',
-      notes: 'Automated test fixture'
-    }
-  });
-
-  expect(response.ok()).toBeTruthy();
-});
-
-Given('I navigate to the phone book application', async function (this: CustomWorld) {
-  await this.phoneBookPage.goto();
-});
 
 Then('I should see the contacts table', async function (this: CustomWorld) {
   await expect(this.phoneBookPage.contactsTable).toBeVisible();
@@ -38,7 +13,8 @@ Then('I should see existing contact entries in the directory', async function (t
 
 Then('the contacts count in the summary card should match the table', async function (this: CustomWorld) {
   const totalCount = await this.phoneBookPage.getTotalCountFromStat();
-  expect(totalCount).toBeGreaterThan(0);
+  const contacts = await this.api.getAllContacts();
+  expect(totalCount).toBe(contacts.length);
 });
 
 When('I click on the "Add Contact" button', async function (this: CustomWorld) {
@@ -62,10 +38,6 @@ When('I submit the contact form', async function (this: CustomWorld) {
 Then('I should see {string} in the directory', async function (this: CustomWorld, expectedText: string) {
   await this.phoneBookPage.search(expectedText);
   await expect(this.phoneBookPage.contactsTable).toContainText(expectedText);
-});
-
-When('I search for {string} in the search box', async function (this: CustomWorld, searchTerm: string) {
-  await this.phoneBookPage.search(searchTerm);
 });
 
 When('I click the edit button for {string}', async function (this: CustomWorld, contactName: string) {

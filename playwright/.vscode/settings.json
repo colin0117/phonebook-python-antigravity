@@ -1,0 +1,22 @@
+{
+  "cucumberautocomplete.steps": [
+    "step-definitions/**/*.ts"
+  ],
+  "cucumberautocomplete.syncfeatures": "features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": false,
+  "cucumberautocomplete.strictGherkinValidation": false,
+  "cucumberautocomplete.smartSnippets": true,
+  "cucumberautocomplete.stepsInvariants": true,
+  "cucumberautocomplete.pages": {
+    "phoneBookPage": "pages/phone-book.page.ts",
+    "addModal": "pages/add-contact-modal.page.ts",
+    "editModal": "pages/edit-contact-modal.page.ts"
+  },
+  "cucumber.features": [
+    "features/**/*.feature"
+  ],
+  "cucumber.glue": [
+    "step-definitions/**/*.ts",
+    "support/**/*.ts"
+  ]
+}

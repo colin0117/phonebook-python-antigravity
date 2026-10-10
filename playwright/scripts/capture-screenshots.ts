@@ -16,6 +16,25 @@ async function capture() {
 
   const page = await context.newPage();
 
+  // Clean up any leftover test contacts so screenshots show clean sample data
+  const res = await context.request.get('http://127.0.0.1:5000/api/contacts');
+  if (res.ok()) {
+    const body = await res.json();
+    for (const c of body.data || []) {
+      const ln = String(c.last_name || '');
+      if (
+        ln.includes('Test') ||
+        ln.includes('Create') ||
+        ln.includes('Update') ||
+        ln.includes('Delete') ||
+        ln.includes('Batch_') ||
+        ln === 'aaa'
+      ) {
+        await context.request.delete(`http://127.0.0.1:5000/api/contacts/${c.id}`);
+      }
+    }
+  }
+
   // 1. Capture Main Directory Screen
   console.log('Navigating to http://127.0.0.1:5000...');
   await page.goto('http://127.0.0.1:5000', { waitUntil: 'networkidle' });

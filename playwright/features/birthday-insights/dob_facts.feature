@@ -1,11 +1,4 @@
 Feature: Interesting Date of Birth Facts and Star Sign Pop-up
-  As a phone book user
-  When I add or update a contact with a Date of Birth
-  I want a pop-up alert displaying:
-    1. A fun fact pulled from the web
-    2. A refresh button to display the next fun fact
-    3. An astrological star sign fact
-  And I want the facts to cycle dynamically when clicking the refresh button
 
   Scenario: Pop-up displays web facts, star sign, and allows refreshing facts on new contact
     Given I navigate to the phone book application
@@ -27,6 +20,7 @@ Feature: Interesting Date of Birth Facts and Star Sign Pop-up
     When I click the refresh button for the next fun fact in the pop-up
     Then the pop-up should display an updated fun fact
 
+  @colin
   Scenario: Pop-up displays web facts, star sign, and allows refreshing facts on updating contact
     Given a contact exists named "Neil Apollo-FactTest" with phone "+1 (555) 888-1969"
     And I navigate to the phone book application

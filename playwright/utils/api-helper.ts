@@ -21,6 +21,12 @@ export class ApiHelper {
     return await this.request.get('/api/contacts');
   }
 
+  async getAllContacts(): Promise<ContactPayload[]> {
+    const res = await this.getContacts();
+    const body = await res.json();
+    return body.data || [];
+  }
+
   async createContact(payload: ContactPayload | Record<string, string>): Promise<APIResponse> {
     return await this.request.post('/api/contacts', { data: payload });
   }

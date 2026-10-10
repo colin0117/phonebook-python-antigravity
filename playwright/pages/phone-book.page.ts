@@ -12,13 +12,27 @@ export class PhoneBookPage extends BasePage {
   readonly tableHeaders: Locator;
   readonly tableRows: Locator;
   readonly searchInput: Locator;
+
+  // Header Summary Stat Locators
   readonly totalContactsStat: Locator;
+  readonly workContactsStat: Locator;
+  readonly familyContactsStat: Locator;
+  readonly otherContactsStat: Locator;
+  readonly totalContactsCard: Locator;
+  readonly workContactsCard: Locator;
+  readonly familyContactsCard: Locator;
+  readonly otherContactsCard: Locator;
 
   // View & Filter Action Controls
   readonly openAddModalButton: Locator;
   readonly viewTableButton: Locator;
   readonly viewCardsButton: Locator;
   readonly togglePanesButton: Locator;
+  readonly toggleSearchBuilderButton: Locator;
+  readonly searchPanesContainer: Locator;
+  readonly searchBuilderContainer: Locator;
+  readonly searchBuilderAddButton: Locator;
+  readonly searchBuilderClearAllButton: Locator;
 
   // Centered Birthday Insights Pop-up Locators
   readonly dobFactModal: Locator;
@@ -52,13 +66,27 @@ export class PhoneBookPage extends BasePage {
     this.tableHeaders = page.locator('#contactsTable thead th');
     this.tableRows = page.locator('#contactsTable tbody tr');
     this.searchInput = page.getByPlaceholder('Search contacts...');
+
+    // Header Summary Stat Locators
     this.totalContactsStat = page.locator('#stat-total');
+    this.workContactsStat = page.locator('#stat-work');
+    this.familyContactsStat = page.locator('#stat-family');
+    this.otherContactsStat = page.locator('#stat-other');
+    this.totalContactsCard = page.locator('.stat-box.stat-total');
+    this.workContactsCard = page.locator('.stat-box.stat-work');
+    this.familyContactsCard = page.locator('.stat-box.stat-family');
+    this.otherContactsCard = page.locator('.stat-box.stat-other');
 
     // View & Filter Action Controls
     this.openAddModalButton = page.getByRole('button', { name: 'Add Contact' });
     this.viewTableButton = page.getByRole('button', { name: 'Table View' });
     this.viewCardsButton = page.getByRole('button', { name: 'Card View' });
     this.togglePanesButton = page.getByRole('button', { name: 'Filter Panes' });
+    this.toggleSearchBuilderButton = page.getByRole('button', { name: 'Search Builder' });
+    this.searchPanesContainer = page.locator('.dtsp-panesContainer');
+    this.searchBuilderContainer = page.locator('.dtsb-searchBuilder');
+    this.searchBuilderAddButton = page.locator('.dtsb-searchBuilder button.dtsb-add');
+    this.searchBuilderClearAllButton = page.locator('.dtsb-searchBuilder button.dtsb-clearAll');
 
     // Centered Birthday Insights Pop-up Locators
     this.dobFactModal = page.locator('#dobFactModal');
@@ -257,7 +285,81 @@ export class PhoneBookPage extends BasePage {
     return parseInt(text.trim(), 10);
   }
 
+  getStatCard(label: string): Locator {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('total')) {
+      return this.totalContactsCard;
+    } else if (normalized.includes('work')) {
+      return this.workContactsCard;
+    } else if (normalized.includes('family')) {
+      return this.familyContactsCard;
+    }
+    return this.otherContactsCard;
+  }
+
+  async getStatCount(label: string): Promise<number> {
+    const normalized = label.toLowerCase();
+    let locator = this.otherContactsStat;
+    if (normalized.includes('total')) {
+      locator = this.totalContactsStat;
+    } else if (normalized.includes('work')) {
+      locator = this.workContactsStat;
+    } else if (normalized.includes('family')) {
+      locator = this.familyContactsStat;
+    }
+    const text = await locator.innerText();
+    return parseInt(text.trim(), 10);
+  }
+
+  async getAllStatCounts(): Promise<Record<string, number>> {
+    return {
+      'Total Contacts': await this.getStatCount('Total Contacts'),
+      'Work': await this.getStatCount('Work'),
+      'Family': await this.getStatCount('Family'),
+      'Friends & Others': await this.getStatCount('Friends & Others')
+    };
+  }
+
   async getRowCount(): Promise<number> {
     return await this.tableRows.count();
   }
+
+  async addSearchBuilderCondition(columnLabel: string, conditionLabel: string, value: string) {
+    await this.dismissDobFactModalIfOpen();
+    await this.searchBuilderAddButton.click();
+
+    const criteria = this.searchBuilderContainer.locator('.dtsb-criteria').last();
+    const dataSelect = criteria.locator('select.dtsb-data');
+    await dataSelect.selectOption({ label: columnLabel });
+
+    const conditionSelect = criteria.locator('select.dtsb-condition');
+    await conditionSelect.waitFor({ state: 'visible' });
+    await conditionSelect.selectOption({ label: conditionLabel });
+
+    const valueControl = criteria.locator('.dtsb-value').first();
+    await valueControl.waitFor({ state: 'visible' });
+    const tagName = await valueControl.evaluate(el => el.tagName.toLowerCase());
+    if (tagName === 'select') {
+      await valueControl.selectOption({ label: value });
+    } else {
+      await valueControl.fill(value);
+      await valueControl.dispatchEvent('input');
+      await valueControl.dispatchEvent('change');
+    }
+  }
+
+  async clearSearchBuilder() {
+    await this.dismissDobFactModalIfOpen();
+    if (await this.searchBuilderClearAllButton.isVisible()) {
+      await this.searchBuilderClearAllButton.click();
+    }
+  }
+
+  async selectSearchPaneCategory(category: string) {
+    await this.dismissDobFactModalIfOpen();
+    const paneRow = this.searchPanesContainer.locator('tr', { hasText: category }).first();
+    await paneRow.click();
+  }
 }
+
+

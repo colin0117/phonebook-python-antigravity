@@ -14,6 +14,7 @@ export interface CustomWorld extends World {
   initialFactText?: string;
   lastApiResponse?: APIResponse;
   lastDialogMessage?: string;
+  recordedStats?: Record<string, number>;
 }
 
 export class CustomWorldClass extends World implements CustomWorld {
@@ -26,6 +27,7 @@ export class CustomWorldClass extends World implements CustomWorld {
   initialFactText?: string;
   lastApiResponse?: APIResponse;
   lastDialogMessage?: string;
+  recordedStats?: Record<string, number>;
 
   constructor(options: IWorldOptions) {
     super(options);
@@ -33,3 +35,4 @@ export class CustomWorldClass extends World implements CustomWorld {
 }
 
 setWorldConstructor(CustomWorldClass);
+

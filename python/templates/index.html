@@ -15,13 +15,17 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/2.1.0/css/select.bulma.min.css">
     <!-- DataTables SearchPanes Extension CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.bulma.min.css">
+    <!-- DataTables DateTime Extension CSS (Used by SearchBuilder for Date fields) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.5.4/css/dataTables.dateTime.min.css">
+    <!-- DataTables SearchBuilder Extension CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/searchbuilder/1.8.1/css/searchBuilder.bulma.min.css">
     <!-- DataTables Responsive Extension CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.3/css/responsive.bulma.min.css">
     <!-- DataTables Buttons Extension CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.bulma.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=7">
 </head>
 <body>
 
@@ -155,6 +159,11 @@
                         <i class="bi bi-funnel-fill mr-1"></i> Filter Panes
                     </button>
 
+                    <!-- SearchBuilder Toggle Button -->
+                    <button class="button is-light is-small" id="toggleSearchBuilderBtn" title="Toggle SearchBuilder advanced query section">
+                        <i class="bi bi-sliders mr-1"></i> Search Builder
+                    </button>
+
                     <!-- View Mode Switcher: Table View vs Card View -->
                     <div class="buttons has-addons mb-0">
                         <button type="button" class="button is-small is-primary is-selected" id="btnViewTable" title="Table View">
@@ -184,10 +193,10 @@
                     <tbody>
                         {% for c in contacts %}
                         <tr id="row-{{ c.id }}">
-                            <td class="col-id">
+                            <td class="col-id" data-search="#{{ c.id }}" data-order="{{ c.id }}">
                                 <span class="tag is-light is-rounded">#{{ c.id }}</span>
                             </td>
-                            <td class="col-name">
+                            <td class="col-name" data-search="{{ c.last_name }}, {{ c.first_name }}" data-order="{{ c.last_name }}, {{ c.first_name }}">
                                 <div class="is-flex is-align-items-center">
                                     <div class="avatar-circle mr-2">
                                         {{ c.first_name[0] | upper }}{{ c.last_name[0] | upper }}
@@ -198,12 +207,12 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="col-phone">
+                            <td class="col-phone" data-search="{{ c.phone_number }}">
                                 <a href="tel:{{ c.phone_number }}" class="has-text-dark is-underlined-hover">
                                     <i class="bi bi-telephone has-text-primary mr-1"></i>{{ c.phone_number }}
                                 </a>
                             </td>
-                            <td class="col-email">
+                            <td class="col-email" data-search="{{ c.email or '' }}">
                                 {% if c.email %}
                                 <a href="mailto:{{ c.email }}" class="has-text-grey is-underlined-hover">
                                     <i class="bi bi-envelope mr-1"></i>{{ c.email }}
@@ -212,14 +221,14 @@
                                 <span class="has-text-grey-light is-italic">None</span>
                                 {% endif %}
                             </td>
-                            <td class="col-dob is-nowrap">
+                            <td class="col-dob is-nowrap" data-search="{{ c.date_of_birth or '' }}" data-order="{{ c.date_of_birth or '' }}">
                                 {% if c.date_of_birth %}
                                 <span class="has-text-grey-dark"><i class="bi bi-calendar-event mr-1 has-text-primary"></i>{{ c.date_of_birth }}</span>
                                 {% else %}
                                 <span class="has-text-grey-light is-italic">—</span>
                                 {% endif %}
                             </td>
-                            <td class="col-category">
+                            <td class="col-category" data-search="{{ c.category or 'General' }}">
                                 {% set cat = c.category | lower %}
                                 {% if cat == 'work' %}
                                     <span class="tag is-success is-light has-text-weight-semibold">Work</span>
@@ -233,7 +242,7 @@
                                     <span class="tag is-light has-text-weight-semibold">{{ c.category or 'General' }}</span>
                                 {% endif %}
                             </td>
-                            <td class="col-notes is-size-7 has-text-grey" title="{{ c.notes or '' }}">
+                            <td class="col-notes is-size-7 has-text-grey" data-search="{{ c.notes or '' }}" title="{{ c.notes or '' }}">
                                 <i class="bi bi-chat-left-dots mr-1"></i>{{ c.notes or '—' }}
                             </td>
                             <td class="col-actions has-text-centered">
@@ -460,6 +469,13 @@
     <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/dataTables.searchPanes.min.js"></script>
     <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/searchPanes.bulma.min.js"></script>
 
+    <!-- DataTables DateTime Extension (Used by SearchBuilder for Date fields) -->
+    <script src="https://cdn.datatables.net/datetime/1.5.4/js/dataTables.dateTime.min.js"></script>
+
+    <!-- DataTables SearchBuilder Extension -->
+    <script src="https://cdn.datatables.net/searchbuilder/1.8.1/js/dataTables.searchBuilder.min.js"></script>
+    <script src="https://cdn.datatables.net/searchbuilder/1.8.1/js/searchBuilder.bulma.min.js"></script>
+
     <!-- DataTables Responsive Extension -->
     <script src="https://cdn.datatables.net/responsive/3.0.3/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/3.0.3/js/responsive.bulma.min.js"></script>
@@ -501,7 +517,7 @@
                 openModal('#addContactModal');
             });
 
-            // Initialize DataTables with Bulma, SearchPanes, sorting, search, pagination, and export buttons
+            // Initialize DataTables with Bulma, SearchPanes, SearchBuilder, sorting, search, pagination, and export buttons
             const table = $('#contactsTable').DataTable({
                 responsive: true,
                 pageLength: 9, // Multiples of 3 look best for 3-column card layouts
@@ -512,6 +528,9 @@
                     viewTotal: true,
                     layout: 'columns-1',
                     initCollapsed: false
+                },
+                searchBuilder: {
+                    columns: [0, 1, 2, 3, 4, 5, 6]
                 },
                 columnDefs: [
                     {
@@ -532,7 +551,8 @@
                     { responsivePriority: 3, targets: 7 }  // Actions
                 ],
                 layout: {
-                    top1: 'searchPanes',
+                    top1Start: 'searchPanes',
+                    top1End: 'searchBuilder',
                     topStart: {
                         buttons: [
                             { 
@@ -681,6 +701,12 @@
             // Toggle SearchPanes visibility
             $('#togglePanesBtn').on('click', function () {
                 $('.dtsp-panesContainer').slideToggle(200);
+                $(this).toggleClass('active');
+            });
+
+            // Toggle SearchBuilder visibility
+            $('#toggleSearchBuilderBtn').on('click', function () {
+                $('.dtsb-searchBuilder').slideToggle(200);
                 $(this).toggleClass('active');
             });
 

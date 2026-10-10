@@ -1,7 +1,4 @@
 Feature: Phone Book CRUD Operations
-  As a phone book user
-  I want each CRUD operation to be tested independently
-  So that scenarios are isolated, order-agnostic, and repeatable
 
   Scenario: Read contacts in the directory
     Given I navigate to the phone book application

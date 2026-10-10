@@ -128,13 +128,42 @@ div.dt-container div.dt-layout-row div.dt-buttons .button:hover {
     color: #ffffff !important;
 }
 
-/* SearchPanes Section */
-.dtsp-panesContainer {
+/* Side-by-side layout row for SearchPanes (top1Start) & SearchBuilder (top1End) */
+div.dt-container div.columns.dt-layout-row:has(.dtsp-panesContainer),
+div.dt-container div.columns.dt-layout-row:has(.dtsb-searchBuilder) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    margin: 0 0 1rem 0 !important;
+}
+
+div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsp-panesContainer),
+div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsb-searchBuilder) {
+    flex: 1 1 calc(50% - 0.5rem) !important;
+    width: calc(50% - 0.5rem) !important;
+    max-width: none !important;
+    min-width: 320px;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsp-panesContainer[style*="display: none"]),
+div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsb-searchBuilder[style*="display: none"]) {
+    display: none !important;
+}
+
+/* SearchPanes & SearchBuilder Sections */
+.dtsp-panesContainer,
+.dtsb-searchBuilder {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
     padding: 1rem !important;
-    margin-bottom: 1.5rem !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    height: 100%;
+    box-sizing: border-box !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
 }
 
@@ -144,14 +173,16 @@ div.dt-container div.dt-layout-row div.dt-buttons .button:hover {
     background: #ffffff !important;
 }
 
-.dtsp-title {
+.dtsp-title,
+.dtsb-titleRow {
     font-weight: 600 !important;
     font-size: 0.9rem !important;
     color: #334155 !important;
 }
 
-/* Filter Panes toggle button active state */
-#togglePanesBtn.active {
+/* Filter Panes & SearchBuilder toggle button active state */
+#togglePanesBtn.active,
+#toggleSearchBuilderBtn.active {
     background-color: #e2e8f0;
     color: #0f172a;
     border-color: #94a3b8;
