@@ -28,6 +28,10 @@ This repository contains a **Phone Book Directory** web application and its auto
 - Keep all DOM selectors and UI interactions encapsulated inside `playwright/pages/` (`PhoneBookPage`, `AddContactModal`, `EditContactModal`).
 - Use condition-driven waits (`waitFor`, Playwright web-first assertions) and never use arbitrary `waitForTimeout` sleeps in tests.
 
+### 4. Documentation & Rule Maintenance (Always Keep Current)
+- Whenever you add, rename, or remove application features, API endpoints, test suites (`.feature` or `.spec.ts` files), or project conventions, **proactively update both `README.md` and `AGENTS.md` in the same turn** without waiting for the user to ask.
+- Whenever you make visible UI changes to the main directory screen or Birthday Insights modal, regenerate `docs/screenshots/main-directory.png` and `docs/screenshots/birthday-insights.png` using `npx ts-node playwright/scripts/capture-screenshots.ts`.
+
 ---
 
 ## Common Commands
