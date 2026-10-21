@@ -6,6 +6,10 @@ Then('the SearchPanes filter container should be visible', async function (this:
   await expect(this.phoneBookPage.searchPanesContainer).toBeVisible();
 });
 
+Then('the SearchPanes filter container should be hidden', async function (this: CustomWorld) {
+  await expect(this.phoneBookPage.searchPanesContainer).toBeHidden();
+});
+
 Then('the SearchBuilder query container should be visible', async function (this: CustomWorld) {
   await expect(this.phoneBookPage.searchBuilderContainer).toBeVisible();
 });
@@ -15,12 +19,10 @@ Then('the SearchBuilder query container should be hidden', async function (this:
 });
 
 Then('SearchPanes and SearchBuilder should be aligned side by side in the same layout row', async function (this: CustomWorld) {
-  const sharedRow = this.phoneBookPage.page.locator('.dt-layout-row', {
-    has: this.phoneBookPage.searchPanesContainer
-  }).filter({
-    has: this.phoneBookPage.searchBuilderContainer
-  });
-  await expect(sharedRow, 'Expected SearchPanes and SearchBuilder to share a single .dt-layout-row').toBeVisible();
+  await expect(
+    this.phoneBookPage.searchToolsLayoutRow,
+    'Expected SearchPanes and SearchBuilder to share a single DataTables layout row'
+  ).toBeVisible();
 
   const panesBox = await this.phoneBookPage.searchPanesContainer.boundingBox();
   const builderBox = await this.phoneBookPage.searchBuilderContainer.boundingBox();
@@ -33,8 +35,12 @@ Then('the SearchBuilder "Add Condition" button should be visible', async functio
   await expect(this.phoneBookPage.searchBuilderAddButton).toBeVisible();
 });
 
+When('I click the "Filter Panes" toggle button', async function (this: CustomWorld) {
+  await this.phoneBookPage.toggleFilterPanes();
+});
+
 When('I click the "Search Builder" toggle button', async function (this: CustomWorld) {
-  await this.phoneBookPage.toggleSearchBuilderButton.click();
+  await this.phoneBookPage.toggleSearchBuilder();
 });
 
 When('I add a SearchBuilder condition where {string} {string} {string}', async function (

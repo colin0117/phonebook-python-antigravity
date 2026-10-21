@@ -129,8 +129,10 @@ div.dt-container div.dt-layout-row div.dt-buttons .button:hover {
 }
 
 /* Side-by-side layout row for SearchPanes (top1Start) & SearchBuilder (top1End) */
-div.dt-container div.columns.dt-layout-row:has(.dtsp-panesContainer),
-div.dt-container div.columns.dt-layout-row:has(.dtsb-searchBuilder) {
+div.dt-container > div.columns:has(.dtsp-panesContainer),
+div.dt-container > div.columns:has(.dtsb-searchBuilder),
+div.dt-container div.dt-layout-row:has(.dtsp-panesContainer),
+div.dt-container div.dt-layout-row:has(.dtsb-searchBuilder) {
     display: flex !important;
     flex-wrap: wrap !important;
     align-items: stretch !important;
@@ -138,8 +140,10 @@ div.dt-container div.columns.dt-layout-row:has(.dtsb-searchBuilder) {
     margin: 0 0 1rem 0 !important;
 }
 
-div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsp-panesContainer),
-div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsb-searchBuilder) {
+div.dt-container > div.columns > div.column:has(.dtsp-panesContainer),
+div.dt-container > div.columns > div.column:has(.dtsb-searchBuilder),
+div.dt-container div.dt-layout-row > div.dt-layout-cell:has(.dtsp-panesContainer),
+div.dt-container div.dt-layout-row > div.dt-layout-cell:has(.dtsb-searchBuilder) {
     flex: 1 1 calc(50% - 0.5rem) !important;
     width: calc(50% - 0.5rem) !important;
     max-width: none !important;
@@ -148,8 +152,10 @@ div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dt
     padding: 0 !important;
 }
 
-div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsp-panesContainer[style*="display: none"]),
-div.dt-container div.columns.dt-layout-row > div.column.dt-layout-cell:has(> .dtsb-searchBuilder[style*="display: none"]) {
+div.dt-container > div.columns > div.column:has(.dtsp-panesContainer[style*="display: none"]),
+div.dt-container > div.columns > div.column:has(.dtsb-searchBuilder[style*="display: none"]),
+div.dt-container div.dt-layout-row > div.dt-layout-cell:has(.dtsp-panesContainer[style*="display: none"]),
+div.dt-container div.dt-layout-row > div.dt-layout-cell:has(.dtsb-searchBuilder[style*="display: none"]) {
     display: none !important;
 }
 

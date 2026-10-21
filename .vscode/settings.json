@@ -1,0 +1,22 @@
+{
+  "cucumberautocomplete.steps": [
+    "playwright/step-definitions/**/*.ts"
+  ],
+  "cucumberautocomplete.syncfeatures": "playwright/features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": false,
+  "cucumberautocomplete.strictGherkinValidation": false,
+  "cucumberautocomplete.smartSnippets": true,
+  "cucumberautocomplete.stepsInvariants": true,
+  "cucumberautocomplete.pages": {
+    "phoneBookPage": "playwright/pages/phone-book.page.ts",
+    "addModal": "playwright/pages/add-contact-modal.page.ts",
+    "editModal": "playwright/pages/edit-contact-modal.page.ts"
+  },
+  "cucumber.features": [
+    "playwright/features/**/*.feature"
+  ],
+  "cucumber.glue": [
+    "playwright/step-definitions/**/*.ts",
+    "playwright/support/**/*.ts"
+  ]
+}

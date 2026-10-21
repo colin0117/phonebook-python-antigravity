@@ -31,6 +31,7 @@ export class PhoneBookPage extends BasePage {
   readonly toggleSearchBuilderButton: Locator;
   readonly searchPanesContainer: Locator;
   readonly searchBuilderContainer: Locator;
+  readonly searchToolsLayoutRow: Locator;
   readonly searchBuilderAddButton: Locator;
   readonly searchBuilderClearAllButton: Locator;
 
@@ -85,6 +86,10 @@ export class PhoneBookPage extends BasePage {
     this.toggleSearchBuilderButton = page.getByRole('button', { name: 'Search Builder' });
     this.searchPanesContainer = page.locator('.dtsp-panesContainer');
     this.searchBuilderContainer = page.locator('.dtsb-searchBuilder');
+    this.searchToolsLayoutRow = page
+      .locator('div.dt-container > div.columns, div.dt-container .dt-layout-row')
+      .filter({ has: this.searchPanesContainer })
+      .filter({ has: this.searchBuilderContainer });
     this.searchBuilderAddButton = page.locator('.dtsb-searchBuilder button.dtsb-add');
     this.searchBuilderClearAllButton = page.locator('.dtsb-searchBuilder button.dtsb-clearAll');
 
@@ -359,6 +364,16 @@ export class PhoneBookPage extends BasePage {
     await this.dismissDobFactModalIfOpen();
     const paneRow = this.searchPanesContainer.locator('tr', { hasText: category }).first();
     await paneRow.click();
+  }
+
+  async toggleFilterPanes() {
+    await this.dismissDobFactModalIfOpen();
+    await this.togglePanesButton.click();
+  }
+
+  async toggleSearchBuilder() {
+    await this.dismissDobFactModalIfOpen();
+    await this.toggleSearchBuilderButton.click();
   }
 }
 
