@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
@@ -7,6 +8,84 @@ import pymysql
 
 from db import init_db, get_connection
 from dob_facts import get_dob_fact, get_dob_details
+
+
+def normalize_phone_for_dup(phone_str):
+    """Normalizes a phone number string for duplicate comparison."""
+    raw = (phone_str or "").strip()
+    if not raw:
+        return ""
+    digits = re.sub(r"\D", "", raw)
+    if len(digits) == 11 and digits.startswith("1"):
+        digits = digits[1:]
+    return digits if digits else raw.lower()
+
+
+def find_duplicate_groups(rows):
+    """Finds duplicate contact groups across Name, Phone Number, and Email."""
+    name_buckets = {}
+    phone_buckets = {}
+    email_buckets = {}
+
+    for row in rows:
+        first = (row.get("first_name") or "").strip()
+        last = (row.get("last_name") or "").strip()
+        if first and last:
+            name_key = f"{first.lower()} {last.lower()}"
+            name_buckets.setdefault(name_key, []).append(row)
+
+        phone_raw = (row.get("phone_number") or "").strip()
+        phone_key = normalize_phone_for_dup(phone_raw)
+        if phone_key:
+            phone_buckets.setdefault(phone_key, []).append(row)
+
+        email_raw = (row.get("email") or "").strip()
+        if email_raw and email_raw.lower() != "none":
+            email_key = email_raw.lower()
+            email_buckets.setdefault(email_key, []).append(row)
+
+    groups = []
+    duplicate_ids = set()
+
+    for key, items in name_buckets.items():
+        if len(items) > 1:
+            display = f"{items[0].get('last_name')}, {items[0].get('first_name')}"
+            groups.append({
+                "field": "Name",
+                "match_key": key,
+                "display_value": display,
+                "contacts": items
+            })
+            for c in items:
+                duplicate_ids.add(c["id"])
+
+    for key, items in phone_buckets.items():
+        if len(items) > 1:
+            groups.append({
+                "field": "Phone Number",
+                "match_key": key,
+                "display_value": items[0].get("phone_number") or key,
+                "contacts": items
+            })
+            for c in items:
+                duplicate_ids.add(c["id"])
+
+    for key, items in email_buckets.items():
+        if len(items) > 1:
+            groups.append({
+                "field": "Email",
+                "match_key": key,
+                "display_value": items[0].get("email") or key,
+                "contacts": items
+            })
+            for c in items:
+                duplicate_ids.add(c["id"])
+
+    return {
+        "duplicate_group_count": len(groups),
+        "duplicate_contact_ids": sorted(list(duplicate_ids)),
+        "groups": groups
+    }
 
 env_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=env_path)
@@ -52,6 +131,25 @@ def get_contacts():
                     if "date_of_birth" in row and row["date_of_birth"]:
                         row["date_of_birth"] = str(row["date_of_birth"])
                 return jsonify({"data": rows, "status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/contacts/duplicates", methods=["GET"])
+def get_duplicate_contacts():
+    """Returns duplicate contact groups across Name, Phone Number, and Email."""
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT * FROM contacts ORDER BY last_name ASC, first_name ASC;")
+                rows = cursor.fetchall()
+                for row in rows:
+                    if "created_at" in row and row["created_at"]:
+                        row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M")
+                    if "date_of_birth" in row and row["date_of_birth"]:
+                        row["date_of_birth"] = str(row["date_of_birth"])
+                dup_info = find_duplicate_groups(rows)
+                return jsonify({"status": "success", **dup_info})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

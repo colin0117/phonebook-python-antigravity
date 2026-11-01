@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.bulma.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=8">
+    <link rel="stylesheet" href="/static/style.css?v=9">
 </head>
 <body>
 
@@ -164,6 +164,12 @@
                         <i class="bi bi-sliders mr-1"></i> Search Builder
                     </button>
 
+                    <!-- Duplicates Check Button -->
+                    <button type="button" class="button is-light is-small" id="openDuplicatesModalBtn" title="Review duplicate contacts">
+                        <i class="bi bi-intersect mr-1"></i> Duplicates
+                        <span class="tag is-rounded is-light ml-1" id="duplicatesCountBadge">0</span>
+                    </button>
+
                     <!-- View Mode Switcher: Table View vs Card View -->
                     <div class="buttons has-addons mb-0">
                         <button type="button" class="button is-small is-primary is-selected" id="btnViewTable" title="Table View">
@@ -176,11 +182,12 @@
                 </div>
             </div>
 
+            <div id="inlineEditAlert" class="notification is-danger is-light is-hidden mb-3 py-2 px-3 is-size-7"></div>
+
             <div class="table-container" id="contactsTableWrapper">
                 <table id="contactsTable" class="table is-striped is-hoverable is-fullwidth w-100">
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>Name</th>
                             <th>Phone Number</th>
                             <th>Email</th>
@@ -193,9 +200,6 @@
                     <tbody>
                         {% for c in contacts %}
                         <tr id="row-{{ c.id }}">
-                            <td class="col-id" data-search="#{{ c.id }}" data-order="{{ c.id }}">
-                                <span class="tag is-light is-rounded">#{{ c.id }}</span>
-                            </td>
                             <td class="col-name" data-search="{{ c.last_name }}, {{ c.first_name }}" data-order="{{ c.last_name }}, {{ c.first_name }}">
                                 <div class="is-flex is-align-items-center">
                                     <div class="avatar-circle mr-2">
@@ -208,24 +212,22 @@
                                 </div>
                             </td>
                             <td class="col-phone" data-search="{{ c.phone_number }}">
-                                <a href="tel:{{ c.phone_number }}" class="has-text-dark is-underlined-hover">
-                                    <i class="bi bi-telephone has-text-primary mr-1"></i>{{ c.phone_number }}
-                                </a>
+                                <a href="tel:{{ c.phone_number }}" class="contact-icon-link mr-1" title="Call {{ c.phone_number }}">
+                                    <i class="bi bi-telephone has-text-primary"></i>
+                                </a><span class="has-text-dark editable-cell-text">{{ c.phone_number }}</span>
                             </td>
                             <td class="col-email" data-search="{{ c.email or '' }}">
                                 {% if c.email %}
-                                <a href="mailto:{{ c.email }}" class="has-text-grey is-underlined-hover">
-                                    <i class="bi bi-envelope mr-1"></i>{{ c.email }}
-                                </a>
+                                <a href="mailto:{{ c.email }}" class="contact-icon-link mr-1" title="Email {{ c.email }}">
+                                    <i class="bi bi-envelope has-text-grey"></i>
+                                </a><span class="has-text-grey editable-cell-text">{{ c.email }}</span>
                                 {% else %}
-                                <span class="has-text-grey-light is-italic">None</span>
+                                <span class="has-text-grey-light is-italic editable-cell-text">None</span>
                                 {% endif %}
                             </td>
                             <td class="col-dob is-nowrap" data-search="{{ c.date_of_birth or '' }}" data-order="{{ c.date_of_birth or '' }}">
                                 {% if c.date_of_birth %}
                                 <span class="has-text-grey-dark"><i class="bi bi-calendar-event mr-1 has-text-primary"></i>{{ c.date_of_birth }}</span>
-                                {% else %}
-                                <span class="has-text-grey-light is-italic">—</span>
                                 {% endif %}
                             </td>
                             <td class="col-category" data-search="{{ c.category or 'General' }}">
@@ -454,6 +456,26 @@
         </form>
     </div>
 
+    <!-- Modal: Duplicate Contacts Review -->
+    <div class="modal" id="duplicatesModal" tabindex="-1">
+        <div class="modal-background" data-close-modal></div>
+        <div class="modal-card" style="max-width: 760px; width: 95%;">
+            <header class="modal-card-head" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">
+                <p class="modal-card-title has-text-white has-text-weight-bold is-size-5 mb-0 is-flex is-align-items-center" style="gap: 0.5rem;">
+                    <i class="bi bi-intersect"></i> <span>Duplicate Contacts</span>
+                </p>
+                <button type="button" class="delete is-medium" aria-label="close" data-close-modal></button>
+            </header>
+            <section class="modal-card-body p-4" id="duplicatesModalBody" style="background-color: #fbfbfb;">
+                <p class="has-text-grey is-size-6 mb-0" id="noDuplicatesMessage">No duplicate contacts found across Name, Phone Number, or Email.</p>
+                <div id="duplicatesGroupsContainer"></div>
+            </section>
+            <footer class="modal-card-foot is-justify-content-flex-end">
+                <button type="button" class="button is-light" id="closeDuplicatesModalBtn" data-close-modal>Close</button>
+            </footer>
+        </div>
+    </div>
+
     <!-- Scripts: jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -522,7 +544,7 @@
                 responsive: true,
                 pageLength: 9, // Multiples of 3 look best for 3-column card layouts
                 lengthMenu: [[6, 9, 15, 30, -1], [6, 9, 15, 30, "All"]],
-                order: [[1, 'asc']], // Default sort by Name
+                order: [[0, 'asc']], // Default sort by Name
                 searchPanes: {
                     cascadePanes: true,
                     viewTotal: true,
@@ -530,7 +552,7 @@
                     initCollapsed: false
                 },
                 searchBuilder: {
-                    columns: [0, 1, 2, 3, 4, 5, 6]
+                    columns: [0, 1, 2, 3, 4, 5]
                 },
                 columnDefs: [
                     {
@@ -538,17 +560,17 @@
                             show: true,
                             header: 'Filter by Category'
                         },
-                        targets: [5] // Category column
+                        targets: [4] // Category column
                     },
                     {
                         searchPanes: {
                             show: false
                         },
-                        targets: [0, 1, 2, 3, 4, 6, 7]
+                        targets: [0, 1, 2, 3, 5, 6]
                     },
-                    { responsivePriority: 1, targets: 1 }, // Name
-                    { responsivePriority: 2, targets: 2 }, // Phone
-                    { responsivePriority: 3, targets: 7 }  // Actions
+                    { responsivePriority: 1, targets: 0 }, // Name
+                    { responsivePriority: 2, targets: 1 }, // Phone
+                    { responsivePriority: 3, targets: 6 }  // Actions
                 ],
                 layout: {
                     top1Start: 'searchPanes',
@@ -710,6 +732,142 @@
                 $(this).toggleClass('active');
             });
 
+            // =========================================================================
+            // Duplicate Contacts Detection & Modal
+            // =========================================================================
+            let latestDuplicatesData = { duplicate_group_count: 0, duplicate_contact_ids: [], groups: [] };
+
+            function renderDuplicatesModal(dupData) {
+                const groups = dupData.groups || [];
+                const $container = $('#duplicatesGroupsContainer');
+                const $emptyMsg = $('#noDuplicatesMessage');
+                $container.empty();
+
+                if (groups.length === 0) {
+                    $emptyMsg.removeClass('is-hidden');
+                    return;
+                }
+
+                $emptyMsg.addClass('is-hidden');
+                groups.forEach((group) => {
+                    const rowsHtml = (group.contacts || []).map(c => `
+                        <tr>
+                            <td class="has-text-weight-semibold">${escapeHtml(c.last_name)}, ${escapeHtml(c.first_name)}</td>
+                            <td>${escapeHtml(c.phone_number)}</td>
+                            <td>${escapeHtml(c.email || 'None')}</td>
+                            <td><span class="tag is-light">${escapeHtml(c.category || 'General')}</span></td>
+                        </tr>
+                    `).join('');
+
+                    const filterTerm = group.field === 'Name'
+                        ? (group.contacts[0]?.last_name || group.display_value)
+                        : group.display_value;
+
+                    const cardHtml = `
+                        <div class="box mb-3 p-3 duplicate-group-card">
+                            <div class="is-flex is-justify-content-between is-align-items-center mb-2 is-flex-wrap-wrap" style="gap: 0.5rem;">
+                                <div>
+                                    <span class="tag is-warning is-light has-text-weight-bold mr-2">Duplicate ${escapeHtml(group.field)}</span>
+                                    <span class="has-text-weight-bold has-text-dark">${escapeHtml(group.display_value)}</span>
+                                    <span class="is-size-7 has-text-grey ml-1">(${group.contacts.length} records)</span>
+                                </div>
+                                <button type="button" class="button is-small is-link is-light btn-filter-duplicate-group" data-filter="${escapeHtml(filterTerm)}">
+                                    <i class="bi bi-search mr-1"></i> Show in Table
+                                </button>
+                            </div>
+                            <table class="table is-fullwidth is-narrow is-striped is-size-7 mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone Number</th>
+                                        <th>Email</th>
+                                        <th>Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rowsHtml}</tbody>
+                            </table>
+                        </div>
+                    `;
+                    $container.append(cardHtml);
+                });
+            }
+
+            function applyDuplicateRowBadges(dupData) {
+                const reasonsById = {};
+                (dupData.groups || []).forEach(g => {
+                    (g.contacts || []).forEach(c => {
+                        if (!reasonsById[c.id]) reasonsById[c.id] = [];
+                        if (!reasonsById[c.id].includes(g.field)) {
+                            reasonsById[c.id].push(g.field);
+                        }
+                    });
+                });
+
+                table.rows().every(function () {
+                    const rowNode = this.node();
+                    if (!rowNode) return;
+                    const $row = $(rowNode);
+                    const id = Number($row.find('.btn-edit').attr('data-id'));
+                    const $nameCell = $row.find('.col-name');
+                    $nameCell.find('.duplicate-row-badge').remove();
+
+                    if (reasonsById[id]) {
+                        const reasonText = `Duplicate ${reasonsById[id].join(', ')}`;
+                        $row.addClass('is-duplicate-row');
+                        $nameCell.find('.has-text-weight-bold.has-text-dark').first().append(
+                            ` <span class="tag is-warning is-light is-rounded ml-1 duplicate-row-badge" title="${escapeHtml(reasonText)}"><i class="bi bi-exclamation-triangle-fill mr-1"></i>Duplicate</span>`
+                        );
+                    } else {
+                        $row.removeClass('is-duplicate-row');
+                    }
+                });
+            }
+
+            async function refreshDuplicatesStatus() {
+                try {
+                    const res = await fetch('/api/contacts/duplicates');
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        latestDuplicatesData = data;
+                        const count = data.duplicate_group_count || 0;
+                        $('#duplicatesCountBadge').text(count);
+                        if (count > 0) {
+                            $('#openDuplicatesModalBtn').removeClass('is-light').addClass('is-warning is-light');
+                            $('#duplicatesCountBadge').removeClass('is-light').addClass('is-warning');
+                        } else {
+                            $('#openDuplicatesModalBtn').removeClass('is-warning').addClass('is-light');
+                            $('#duplicatesCountBadge').removeClass('is-warning').addClass('is-light');
+                        }
+                        applyDuplicateRowBadges(data);
+                        renderDuplicatesModal(data);
+                    }
+                } catch (err) {
+                    console.error('Error checking duplicates:', err);
+                }
+            }
+
+            $('#openDuplicatesModalBtn').on('click', async function () {
+                await refreshDuplicatesStatus();
+                openModal('#duplicatesModal');
+            });
+
+            $('#contactsTable').on('click', '.duplicate-row-badge', async function (e) {
+                e.stopPropagation();
+                await refreshDuplicatesStatus();
+                openModal('#duplicatesModal');
+            });
+
+            $('#duplicatesModal').on('click', '.btn-filter-duplicate-group', function () {
+                const filterVal = $(this).attr('data-filter') || '';
+                closeModal('#duplicatesModal');
+                const $search = $('div.dt-container input[type="search"]');
+                $search.val(filterVal).trigger('input');
+                table.search(filterVal).draw();
+            });
+
+            // Initial check for duplicates on page load
+            refreshDuplicatesStatus();
+
             // Handle Add Contact Form Submission
             $('#addContactForm').on('submit', async function (e) {
                 e.preventDefault();
@@ -750,17 +908,303 @@
             // Handle Edit Contact Click & Modal Populate
             $('#contactsTable').on('click', '.btn-edit', function () {
                 const btn = $(this);
-                $('#edit_id').val(btn.data('id'));
-                $('#edit_first_name').val(btn.data('firstname'));
-                $('#edit_last_name').val(btn.data('lastname'));
-                $('#edit_phone_number').val(btn.data('phone'));
-                $('#edit_email').val(btn.data('email'));
-                $('#edit_date_of_birth').val(btn.data('dob') || '');
-                $('#edit_category').val(btn.data('category'));
-                $('#edit_notes').val(btn.data('notes'));
+                $('#edit_id').val(btn.attr('data-id'));
+                $('#edit_first_name').val(btn.attr('data-firstname'));
+                $('#edit_last_name').val(btn.attr('data-lastname'));
+                $('#edit_phone_number').val(btn.attr('data-phone'));
+                $('#edit_email').val(btn.attr('data-email'));
+                $('#edit_date_of_birth').val(btn.attr('data-dob') || '');
+                $('#edit_category').val(btn.attr('data-category'));
+                $('#edit_notes').val(btn.attr('data-notes'));
                 $('#editModalAlert').addClass('is-hidden').text('');
 
                 openModal('#editContactModal');
+            });
+
+            // =========================================================================
+            // DataTables Inline Cell Editing (Table View)
+            // =========================================================================
+            function escapeHtml(str) {
+                return String(str ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function renderCellContent($cell, colType, data) {
+                if (colType === 'name') {
+                    const initials = ((data.first_name[0] || '') + (data.last_name[0] || '')).toUpperCase();
+                    const fullOrder = `${data.last_name}, ${data.first_name}`;
+                    $cell.attr('data-search', fullOrder).attr('data-order', fullOrder);
+                    $cell.html(`
+                        <div class="is-flex is-align-items-center">
+                            <div class="avatar-circle mr-2">${escapeHtml(initials)}</div>
+                            <div>
+                                <div class="has-text-weight-bold has-text-dark">${escapeHtml(data.last_name)}, ${escapeHtml(data.first_name)}</div>
+                                <div class="is-size-7 has-text-grey is-hidden-tablet">${escapeHtml(data.category || 'General')}</div>
+                            </div>
+                        </div>
+                    `);
+                } else if (colType === 'phone') {
+                    $cell.attr('data-search', data.phone_number);
+                    $cell.html(`
+                        <a href="tel:${escapeHtml(data.phone_number)}" class="contact-icon-link mr-1" title="Call ${escapeHtml(data.phone_number)}">
+                            <i class="bi bi-telephone has-text-primary"></i>
+                        </a><span class="has-text-dark editable-cell-text">${escapeHtml(data.phone_number)}</span>
+                    `);
+                } else if (colType === 'email') {
+                    $cell.attr('data-search', data.email || '');
+                    if (data.email) {
+                        $cell.html(`
+                            <a href="mailto:${escapeHtml(data.email)}" class="contact-icon-link mr-1" title="Email ${escapeHtml(data.email)}">
+                                <i class="bi bi-envelope has-text-grey"></i>
+                            </a><span class="has-text-grey editable-cell-text">${escapeHtml(data.email)}</span>
+                        `);
+                    } else {
+                        $cell.html('<span class="has-text-grey-light is-italic editable-cell-text">None</span>');
+                    }
+                } else if (colType === 'dob') {
+                    $cell.attr('data-search', data.date_of_birth || '').attr('data-order', data.date_of_birth || '');
+                    if (data.date_of_birth) {
+                        $cell.html(`<span class="has-text-grey-dark"><i class="bi bi-calendar-event mr-1 has-text-primary"></i>${escapeHtml(data.date_of_birth)}</span>`);
+                    } else {
+                        $cell.html('');
+                    }
+                } else if (colType === 'category') {
+                    const cat = (data.category || 'General').toLowerCase();
+                    $cell.attr('data-search', data.category || 'General');
+                    let tagClass = 'is-light';
+                    let label = data.category || 'General';
+                    if (cat === 'work') { tagClass = 'is-success is-light'; label = 'Work'; }
+                    else if (cat === 'family') { tagClass = 'is-warning is-light'; label = 'Family'; }
+                    else if (cat === 'friend') { tagClass = 'is-info is-light'; label = 'Friend'; }
+                    else if (cat === 'services') { tagClass = 'is-danger is-light'; label = 'Services'; }
+                    $cell.html(`<span class="tag ${tagClass} has-text-weight-semibold">${escapeHtml(label)}</span>`);
+                } else if (colType === 'notes') {
+                    $cell.attr('data-search', data.notes || '').attr('title', data.notes || '');
+                    $cell.html(`<i class="bi bi-chat-left-dots mr-1"></i>${escapeHtml(data.notes || '—')}`);
+                }
+            }
+
+            function refreshSummaryStatsFromDom() {
+                let total = 0, work = 0, family = 0, other = 0;
+                table.rows().every(function () {
+                    const rowNode = this.node();
+                    if (!rowNode) return;
+                    const editBtn = $(rowNode).find('.btn-edit');
+                    if (!editBtn.length) return;
+                    total++;
+                    const cat = editBtn.attr('data-category') || 'General';
+                    if (cat === 'Work') work++;
+                    else if (cat === 'Family') family++;
+                    else other++;
+                });
+                $('#stat-total').text(total);
+                $('#stat-work').text(work);
+                $('#stat-family').text(family);
+                $('#stat-other').text(other);
+            }
+
+            $('#contactsTable').on('click', 'tbody tr:not(.child) td:not(.col-actions)', function (e) {
+                // Only enable inline cell editing in Table View
+                if ($('#contactsTable').hasClass('cards-view')) return;
+
+                // Allow clicking the phone/envelope icon link or duplicate badge without opening inline edit
+                if ($(e.target).closest('a.contact-icon-link, .duplicate-row-badge').length) return;
+
+                const $cell = $(this);
+                if ($cell.hasClass('is-editing')) return;
+
+                // On narrow viewports where DataTables Responsive collapses columns, allow clicking .dtr-control to toggle child row
+                if ($cell.hasClass('dtr-control') && table.responsive && table.responsive.hasHidden()) {
+                    return;
+                }
+
+                const $row = $cell.closest('tr');
+                const $editBtn = $row.find('.btn-edit');
+                if (!$editBtn.length) return;
+
+                let colType = null;
+                if ($cell.hasClass('col-name')) colType = 'name';
+                else if ($cell.hasClass('col-phone')) colType = 'phone';
+                else if ($cell.hasClass('col-email')) colType = 'email';
+                else if ($cell.hasClass('col-dob')) colType = 'dob';
+                else if ($cell.hasClass('col-category')) colType = 'category';
+                else if ($cell.hasClass('col-notes')) colType = 'notes';
+                if (!colType) return;
+
+                const currentData = {
+                    id: $editBtn.attr('data-id'),
+                    first_name: $editBtn.attr('data-firstname') || '',
+                    last_name: $editBtn.attr('data-lastname') || '',
+                    phone_number: $editBtn.attr('data-phone') || '',
+                    email: $editBtn.attr('data-email') || '',
+                    date_of_birth: $editBtn.attr('data-dob') || '',
+                    category: $editBtn.attr('data-category') || 'General',
+                    notes: $editBtn.attr('data-notes') || ''
+                };
+
+                $cell.addClass('is-editing');
+                $('#inlineEditAlert').addClass('is-hidden').text('');
+
+                let $input;
+                let initialValue = '';
+
+                if (colType === 'category') {
+                    initialValue = currentData.category;
+                    const categories = ['Work', 'Family', 'Friend', 'Services', 'General'];
+                    const optionsHtml = categories
+                        .map(c => `<option value="${c}" ${c === initialValue ? 'selected' : ''}>${c}</option>`)
+                        .join('');
+                    $cell.html(`<div class="select is-small is-fullwidth"><select class="inline-edit-input">${optionsHtml}</select></div>`);
+                    $input = $cell.find('select.inline-edit-input');
+                } else {
+                    let inputType = 'text';
+                    if (colType === 'name') {
+                        initialValue = `${currentData.last_name}, ${currentData.first_name}`;
+                    } else if (colType === 'phone') {
+                        inputType = 'tel';
+                        initialValue = currentData.phone_number;
+                    } else if (colType === 'email') {
+                        inputType = 'email';
+                        initialValue = currentData.email;
+                    } else if (colType === 'dob') {
+                        inputType = 'date';
+                        initialValue = currentData.date_of_birth;
+                    } else if (colType === 'notes') {
+                        initialValue = currentData.notes;
+                    }
+                    $cell.html(`<input type="${inputType}" class="input is-small inline-edit-input">`);
+                    $input = $cell.find('input.inline-edit-input');
+                    $input.val(initialValue);
+                }
+
+                $input.trigger('focus');
+                if ($input.is('input') && $input.attr('type') !== 'date') {
+                    $input[0].select();
+                }
+
+                let finished = false;
+                const docEventNs = `mousedown.inlineEdit_${currentData.id}_${colType}`;
+
+                function restoreCell(dataToRender) {
+                    $(document).off(docEventNs);
+                    $cell.removeClass('is-editing');
+                    renderCellContent($cell, colType, dataToRender);
+                }
+
+                async function commitInlineEdit() {
+                    if (finished) return;
+                    finished = true;
+                    $(document).off(docEventNs);
+
+                    const rawValue = String($input.val() ?? '').trim();
+                    if (rawValue === initialValue) {
+                        restoreCell(currentData);
+                        return;
+                    }
+
+                    const updatedData = { ...currentData };
+                    if (colType === 'name') {
+                        if (!rawValue) {
+                            $('#inlineEditAlert').removeClass('is-hidden').text('First name, last name, and phone number are required.');
+                            restoreCell(currentData);
+                            return;
+                        }
+                        if (rawValue.includes(',')) {
+                            const parts = rawValue.split(',');
+                            updatedData.last_name = parts[0].trim();
+                            updatedData.first_name = parts.slice(1).join(',').trim();
+                        } else {
+                            const words = rawValue.split(/\s+/);
+                            if (words.length >= 2) {
+                                updatedData.first_name = words[0].trim();
+                                updatedData.last_name = words.slice(1).join(' ').trim();
+                            } else {
+                                updatedData.last_name = rawValue;
+                            }
+                        }
+                    } else if (colType === 'phone') {
+                        updatedData.phone_number = rawValue;
+                    } else if (colType === 'email') {
+                        updatedData.email = rawValue;
+                    } else if (colType === 'dob') {
+                        updatedData.date_of_birth = rawValue;
+                    } else if (colType === 'category') {
+                        updatedData.category = rawValue || 'General';
+                    } else if (colType === 'notes') {
+                        updatedData.notes = rawValue;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/contacts/${currentData.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedData)
+                        });
+                        const result = await response.json();
+
+                        if (response.ok && result.status === 'success') {
+                            $editBtn
+                                .attr('data-firstname', updatedData.first_name)
+                                .attr('data-lastname', updatedData.last_name)
+                                .attr('data-phone', updatedData.phone_number)
+                                .attr('data-email', updatedData.email)
+                                .attr('data-dob', updatedData.date_of_birth)
+                                .attr('data-category', updatedData.category)
+                                .attr('data-notes', updatedData.notes);
+                            $row.find('.btn-delete').attr('data-name', `${updatedData.first_name} ${updatedData.last_name}`);
+
+                            restoreCell(updatedData);
+                            if (colType === 'category') {
+                                renderCellContent($row.find('.col-name'), 'name', updatedData);
+                            }
+
+                            table.row($row[0]).invalidate().draw(false);
+
+                            if (colType === 'category') {
+                                refreshSummaryStatsFromDom();
+                                if (table.searchPanes) {
+                                    table.searchPanes.rebuildPane();
+                                }
+                            }
+                            refreshDuplicatesStatus();
+                        } else {
+                            $('#inlineEditAlert').removeClass('is-hidden').text(result.message || 'Error updating contact.');
+                            restoreCell(currentData);
+                        }
+                    } catch (err) {
+                        $('#inlineEditAlert').removeClass('is-hidden').text('Network error while updating contact.');
+                        restoreCell(currentData);
+                    }
+                }
+
+                // Consistent commit/cancel across all fields:
+                // - Enter or blur (including clicking outside the cell) commits the update
+                // - Escape cancels and restores original cell value
+                $input.on('keydown', function (ev) {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        commitInlineEdit();
+                    } else if (ev.key === 'Escape') {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        finished = true;
+                        restoreCell(currentData);
+                    }
+                });
+
+                $input.on('blur', function () {
+                    commitInlineEdit();
+                });
+
+                $(document).on(docEventNs, function (ev) {
+                    if (!$(ev.target).closest($cell).length) {
+                        commitInlineEdit();
+                    }
+                });
             });
 
             // Handle Edit Contact Form Submission

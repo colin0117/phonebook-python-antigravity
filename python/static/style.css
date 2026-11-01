@@ -302,17 +302,9 @@ table#contactsTable.cards-view th.dtr-control::before {
     display: none !important;
 }
 
-/* Position ID badge in top right corner of card */
-table#contactsTable.cards-view .col-id {
-    position: absolute !important;
-    top: 1rem !important;
-    right: 1rem !important;
-}
-
 /* Card Header: Avatar & Full Name */
 table#contactsTable.cards-view .col-name {
     margin-bottom: 0.75rem !important;
-    padding-right: 3rem !important; /* space for id badge */
 }
 
 /* Category Badge */
@@ -378,4 +370,28 @@ table#contactsTable.cards-view tbody tr:has(.dt-empty) {
     text-align: center !important;
     padding: 2.5rem !important;
     display: block !important;
+}
+
+/* ==========================================================================
+   Inline Table Editing Styles
+   ========================================================================== */
+table#contactsTable:not(.cards-view) tbody tr:not(.child) td:not(.col-actions) {
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+table#contactsTable:not(.cards-view) tbody tr:not(.child) td:not(.col-actions):hover:not(.is-editing) {
+    background-color: #f0fdfa !important;
+    box-shadow: inset 0 0 0 1px rgba(0, 196, 167, 0.35);
+}
+
+table#contactsTable:not(.cards-view) tbody td.is-editing {
+    padding: 0.35rem 0.5rem !important;
+    background-color: #ffffff !important;
+    box-shadow: inset 0 0 0 2px #00c4a7 !important;
+}
+
+table#contactsTable:not(.cards-view) tbody td.is-editing .inline-edit-input {
+    width: 100%;
+    min-width: 110px;
 }

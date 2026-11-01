@@ -95,4 +95,9 @@ export class EditContactModal extends BasePage {
   async attemptSubmit() {
     await this.saveButton.click();
   }
+
+  async close() {
+    await this.cancelButton.click();
+    await this.modal.waitFor({ state: 'hidden' });
+  }
 }

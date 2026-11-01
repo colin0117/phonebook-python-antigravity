@@ -29,6 +29,10 @@ export class PhoneBookPage extends BasePage {
   readonly viewCardsButton: Locator;
   readonly togglePanesButton: Locator;
   readonly toggleSearchBuilderButton: Locator;
+  readonly openDuplicatesModalButton: Locator;
+  readonly duplicatesCountBadge: Locator;
+  readonly duplicatesModal: Locator;
+  readonly duplicatesGroupsContainer: Locator;
   readonly searchPanesContainer: Locator;
   readonly searchBuilderContainer: Locator;
   readonly searchToolsLayoutRow: Locator;
@@ -84,6 +88,10 @@ export class PhoneBookPage extends BasePage {
     this.viewCardsButton = page.getByRole('button', { name: 'Card View' });
     this.togglePanesButton = page.getByRole('button', { name: 'Filter Panes' });
     this.toggleSearchBuilderButton = page.getByRole('button', { name: 'Search Builder' });
+    this.openDuplicatesModalButton = page.locator('#openDuplicatesModalBtn');
+    this.duplicatesCountBadge = page.locator('#duplicatesCountBadge');
+    this.duplicatesModal = page.locator('#duplicatesModal');
+    this.duplicatesGroupsContainer = page.locator('#duplicatesGroupsContainer');
     this.searchPanesContainer = page.locator('.dtsp-panesContainer');
     this.searchBuilderContainer = page.locator('.dtsb-searchBuilder');
     this.searchToolsLayoutRow = page
@@ -374,6 +382,114 @@ export class PhoneBookPage extends BasePage {
   async toggleSearchBuilder() {
     await this.dismissDobFactModalIfOpen();
     await this.toggleSearchBuilderButton.click();
+  }
+
+  getCellForContact(contactName: string, fieldName: string): Locator {
+    const row = this.getRowForContact(contactName);
+    const normalized = fieldName.toLowerCase();
+
+    let cellSelector = '.col-notes';
+    if (normalized.includes('name')) cellSelector = '.col-name';
+    else if (normalized.includes('phone')) cellSelector = '.col-phone';
+    else if (normalized.includes('email')) cellSelector = '.col-email';
+    else if (normalized.includes('birth') || normalized.includes('dob')) cellSelector = '.col-dob';
+    else if (normalized.includes('category')) cellSelector = '.col-category';
+
+    return row.locator(cellSelector);
+  }
+
+  async inlineEditCell(
+    contactName: string,
+    fieldName: string,
+    newValue: string,
+    commitWith: 'enter' | 'blur' = 'enter'
+  ) {
+    await this.dismissDobFactModalIfOpen();
+    const initialRow = this.getRowForContact(contactName);
+    const rowId = await initialRow.getAttribute('id');
+    const row = rowId ? this.page.locator(`#${rowId}`) : initialRow;
+
+    const normalized = fieldName.toLowerCase();
+    let cellSelector = '.col-notes';
+    if (normalized.includes('name')) cellSelector = '.col-name';
+    else if (normalized.includes('phone')) cellSelector = '.col-phone';
+    else if (normalized.includes('email')) cellSelector = '.col-email';
+    else if (normalized.includes('birth') || normalized.includes('dob')) cellSelector = '.col-dob';
+    else if (normalized.includes('category')) cellSelector = '.col-category';
+
+    const cell = row.locator(cellSelector);
+
+    // Click the editable text span directly when present (e.g. Phone/Email) to verify text area is editable
+    const editableText = cell.locator('.editable-cell-text');
+    if ((await editableText.count()) > 0) {
+      await editableText.click();
+    } else {
+      await cell.click();
+    }
+
+    const input = cell.locator('.inline-edit-input');
+    await input.waitFor({ state: 'visible' });
+
+    const tagName = await input.evaluate(el => el.tagName.toLowerCase());
+    if (tagName === 'select') {
+      await input.selectOption({ label: newValue });
+      // Selecting a category option should keep the cell in edit mode until Enter or blur
+      await expect(cell).toHaveClass(/is-editing/);
+    } else {
+      await input.fill(newValue);
+    }
+
+    const responsePromise = this.page.waitForResponse(
+      res => res.url().includes('/api/contacts/') && res.request().method() === 'PUT'
+    );
+
+    if (commitWith === 'blur') {
+      await input.blur();
+    } else {
+      await input.press('Enter');
+    }
+
+    await responsePromise;
+    if ((await cell.count()) > 0) {
+      await expect(cell).not.toHaveClass(/is-editing/);
+    }
+  }
+
+  async cancelInlineEditWithEscape(contactName: string, fieldName: string, tempValue: string) {
+    await this.dismissDobFactModalIfOpen();
+    const initialRow = this.getRowForContact(contactName);
+    const rowId = await initialRow.getAttribute('id');
+    const row = rowId ? this.page.locator(`#${rowId}`) : initialRow;
+
+    const normalized = fieldName.toLowerCase();
+    let cellSelector = '.col-notes';
+    if (normalized.includes('name')) cellSelector = '.col-name';
+    else if (normalized.includes('phone')) cellSelector = '.col-phone';
+    else if (normalized.includes('email')) cellSelector = '.col-email';
+    else if (normalized.includes('birth') || normalized.includes('dob')) cellSelector = '.col-dob';
+    else if (normalized.includes('category')) cellSelector = '.col-category';
+
+    const cell = row.locator(cellSelector);
+    await cell.click();
+
+    const input = cell.locator('.inline-edit-input');
+    await input.waitFor({ state: 'visible' });
+
+    const tagName = await input.evaluate(el => el.tagName.toLowerCase());
+    if (tagName === 'select') {
+      await input.selectOption({ label: tempValue });
+    } else {
+      await input.fill(tempValue);
+    }
+
+    await input.press('Escape');
+    await expect(cell).not.toHaveClass(/is-editing/);
+  }
+
+  async openDuplicatesModal() {
+    await this.dismissDobFactModalIfOpen();
+    await this.openDuplicatesModalButton.click();
+    await this.duplicatesModal.waitFor({ state: 'visible' });
   }
 }
 

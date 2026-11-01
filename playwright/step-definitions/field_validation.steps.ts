@@ -134,3 +134,10 @@ Then('the field {string} on the edit contact form should be invalid', async func
 Then('the "Edit Contact" modal should remain open', async function (this: CustomWorld) {
   await expect(this.phoneBookPage.editModal.modal).toBeVisible();
 });
+
+Then('the Date of Birth cell for {string} should be blank', async function (this: CustomWorld, contactName: string) {
+  await this.phoneBookPage.search(contactName);
+  const row = this.phoneBookPage.getRowForContact(contactName);
+  const dobCell = row.locator('.col-dob');
+  await expect(dobCell).toHaveText('');
+});

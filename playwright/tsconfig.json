@@ -16,6 +16,7 @@
     "utils/**/*",
     "step-definitions/**/*",
     "tests/**/*",
+    "scripts/**/*",
     "playwright.config.ts"
   ]
 }

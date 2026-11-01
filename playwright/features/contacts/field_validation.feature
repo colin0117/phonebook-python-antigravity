@@ -1,13 +1,9 @@
 Feature: Contact Field Display and Validation Verification
-  As a phone book user and system administrator
-  I want to verify that all contact fields are properly displayed
-  So that field validation rules are enforced across the UI
 
   Scenario: 1. Verify all fields are displayed in the contacts table
     Given I navigate to the phone book application
     Then I should see the following column headers in the contacts table:
       | Column Header |
-      | #             |
       | Name          |
       | Phone Number  |
       | Email         |
@@ -17,7 +13,6 @@ Feature: Contact Field Display and Validation Verification
       | Actions       |
     And each contact row in the table should display all field cells:
       | Cell Class   |
-      | col-id       |
       | col-name     |
       | col-phone    |
       | col-email    |
@@ -132,6 +127,7 @@ Feature: Contact Field Display and Validation Verification
     And I submit the contact form
     Then I should see "Minimal" in the directory
     And I should see "ContactTest" in the directory
+    And the Date of Birth cell for "ContactTest" should be blank
 
   Scenario: 9. Field validation prevents updating a contact when a required field is cleared
     Given a contact exists named "ClearField ValTest" with phone "+1 (555) 004-4444"

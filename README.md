@@ -37,6 +37,8 @@ When a contact is added or edited with a **Date of Birth**, a modal pop-up immed
 - Robust validation: Enforces mandatory fields (`first_name`, `last_name`, `phone_number`), validates email format, enforces field length limits, allows optional fields (`email`, `date_of_birth`, `notes`), and validates `YYYY-MM-DD` calendar dates.
 
 ### ⚡ Advanced DataTables.net Features
+- **Quick Inline Cell Editing**: Click any cell (`Name`, `Phone Number`, `Email`, `Date of Birth`, `Category`, or `Notes`) directly in the table to edit it in place (`Enter` or blur to save via `PUT /api/contacts/<id>`, `Escape` to cancel), while keeping the full **Edit Contact** modal form available.
+- **Duplicate Contact Detection & Review Modal**: Automatically checks for duplicate `Name`, `Phone Number` (normalized digits), and `Email` records, displays an in-row `Duplicate` warning badge and live toolbar counter (`Duplicates`), and provides a grouped **Duplicate Contacts** modal with one-click table filtering.
 - **Side-by-Side SearchPanes & SearchBuilder**: Combines one-click category filtering (**SearchPanes** via `top1Start`) with multi-condition custom queries (**SearchBuilder** + **DateTime** via `top1End`) in a single responsive layout row, each with its own toolbar toggle button.
 - **Card View vs Table View**: Toggle seamlessly between standard tabular layout and a responsive multi-column CSS grid card view.
 - **Responsive Layout**: On mobile and narrow viewports (`< 768px`), non-essential columns gracefully collapse into an expandable child row container (`.dtr-control`), with full editing capabilities preserved.
@@ -45,6 +47,7 @@ When a contact is added or edited with a **Date of Birth**, a modal pop-up immed
 
 ### 🔌 RESTful API
 - `GET /api/contacts`: Retrieve all contacts.
+- `GET /api/contacts/duplicates`: Retrieve grouped duplicate contacts across normalized `Name`, `Phone Number`, and `Email`.
 - `POST /api/contacts`: Create a new contact (validates required fields, returns contact ID, `dob_fact`, and `dob_details`).
 - `PUT /api/contacts/<id>`: Update an existing contact (validates required fields, returns updated `dob_details`).
 - `DELETE /api/contacts/<id>`: Delete an existing contact.
@@ -73,6 +76,7 @@ From the project root:
 ```bash
 venv/bin/python python/app.py
 ```
+*(If `venv` needs to be initialized or rebuilt after a system Python upgrade: `python3 -m venv --system-site-packages --without-pip venv && venv/bin/python -m pip install -r python/requirements.txt`)*
 
 ### 3. Open in Browser
 Visit **[http://localhost:5000](http://localhost:5000)** in your web browser.
@@ -132,9 +136,11 @@ Located in [`playwright/features/`](./playwright/features/):
 
 ### 🚀 Running the Tests
 
-You can run tests directly from the project root:
+All Node packages and test runners live inside the `playwright/` folder:
 
 ```bash
+cd playwright
+
 # Run BOTH suites (API tests + Cucumber E2E tests)
 npm test
 
@@ -148,7 +154,7 @@ npm run test:e2e
 npm run test:headed
 
 # Run a single Cucumber feature file
-npx cucumber-js playwright/features/contacts/summary_stats.feature
+npx cucumber-js features/contacts/summary_stats.feature
 
 # Run Cucumber scenarios matching a specific tag (e.g. @colin)
 npx cucumber-js --tags @colin

@@ -1,7 +1,4 @@
 Feature: Responsive Table and Card View
-  As a phone book user on various devices and screen sizes
-  I want the table to adapt responsively by collapsing non-essential fields into an openable details container
-  So that all fields remain fully editable and Card View displays all contact fields cleanly
 
   Scenario: Non-essential fields are collapsed into an openable container on small viewports
     Given a contact exists named "Grace ResponsiveTest" with phone "+1 (555) 444-1111"
@@ -60,7 +57,6 @@ Feature: Responsive Table and Card View
     And I switch to Card View
     Then the contact card for "SmallCardTest" should display all fields:
       | Cell Class   |
-      | col-id       |
       | col-name     |
       | col-phone    |
       | col-email    |
@@ -85,7 +81,6 @@ Feature: Responsive Table and Card View
     And I switch to Card View
     Then the contact card for "DeskCardTest" should display all fields:
       | Cell Class   |
-      | col-id       |
       | col-name     |
       | col-phone    |
       | col-email    |
