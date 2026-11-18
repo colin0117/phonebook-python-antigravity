@@ -125,7 +125,8 @@ Located in [`playwright/tests/api/`](./playwright/tests/api/):
 
 Located in [`playwright/features/`](./playwright/features/):
 
-- **[`crud.feature`](./playwright/features/contacts/crud.feature)**: Directory loading, adding/editing contacts, and delete confirmation dialog handling.
+- **[`crud.feature`](./playwright/features/contacts/crud.feature)**: Directory loading, adding/editing contacts, inline cell editing, and delete confirmation dialog handling.
+- **[`duplicates.feature`](./playwright/features/contacts/duplicates.feature)**: Duplicate contact detection, in-row `Duplicate` warning badges, and the grouped **Duplicate Contacts** modal.
 - **[`summary_stats.feature`](./playwright/features/contacts/summary_stats.feature)**: Header summary bar totals and category breakdown cards (`Total Contacts`, `Work`, `Family`, `Friends & Others`) across create, category-change, and delete flows.
 - **[`search_builder.feature`](./playwright/features/contacts/search_builder.feature)**: Side-by-side **SearchPanes** and **SearchBuilder** layout, toolbar toggling, custom query conditions, and combined filtering.
 - **[`dob_facts.feature`](./playwright/features/birthday-insights/dob_facts.feature)**: Centered Birthday Insights modal display, web facts cycling, and star signs.

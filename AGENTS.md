@@ -16,7 +16,7 @@ This repository contains a **Phone Book Directory** web application and its auto
 - **Feature Headers**: Keep `Feature: <Title>` on a single line at the top of `.feature` files with **no** multi-line `As a... / I want... / So that...` narrative block underneath. The `alexkrechik.cucumberautocomplete` VS Code extension parses unindented narrative lines as undefined steps and breaks "Go to Definition".
 - **Step Organization**:
   - Put cross-cutting steps (API fixture creation, navigation, directory search, manual pause) in `playwright/step-definitions/common.steps.ts`.
-  - Keep domain-specific steps in their corresponding files (`crud.steps.ts`, `dob_facts.steps.ts`, `field_validation.steps.ts`, `responsive.steps.ts`, `summary_stats.steps.ts`, `search_builder.steps.ts`).
+  - Keep domain-specific steps in their corresponding files (`crud.steps.ts`, `duplicates.steps.ts`, `dob_facts.steps.ts`, `field_validation.steps.ts`, `responsive.steps.ts`, `summary_stats.steps.ts`, `search_builder.steps.ts`).
 - **Playwright Subfolder Execution**: All Node dependencies, Playwright configuration, and Cucumber configuration live exclusively inside `playwright/` (`playwright/package.json`, `playwright/cucumber.js`, `playwright/tsconfig.json`).
 - **Manual Verification Step**: Use `And the tests are paused for manual verification` in any scenario to pause Playwright (`page.pause()`) with no step timeout (`{ timeout: -1 }`). The `Before` hook in `playwright/support/hooks.ts` automatically launches Chromium in headed mode whenever a scenario includes this step.
 

@@ -1,6 +1,5 @@
 module.exports = {
   default: {
-    paths: ['features/**/*.feature'],
     require: [
       'support/**/*.ts',
       'step-definitions/**/*.ts'
