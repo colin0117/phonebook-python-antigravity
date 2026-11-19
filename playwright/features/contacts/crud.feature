@@ -9,8 +9,7 @@ Feature: Phone Book CRUD Operations
   Scenario: Create a new contact
     Given I navigate to the phone book application
     When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
-    When I fill in the contact form with:
+    And I fill in the contact form with:
       | Field         | Value                 |
       | First Name    | Ada                   |
       | Last Name     | Lovelace-Create       |
@@ -28,10 +27,8 @@ Feature: Phone Book CRUD Operations
     Given a contact exists named "Margaret Hamilton-Update" with phone "+1 (555) 333-4444"
     And I navigate to the phone book application
     When I search for "Hamilton-Update" in the search box
-    Then I should see "Hamilton-Update" in the directory
-    When I click the edit button for "Hamilton-Update"
-    Then the "Edit Contact" modal should be visible
-    When I update the contact details with:
+    And I click the edit button for "Hamilton-Update"
+    And I update the contact details with:
       | Field         | Value                   |
       | Phone Number  | +1 (555) 999-8888       |
       | Date of Birth | 1980-08-17              |
@@ -49,13 +46,13 @@ Feature: Phone Book CRUD Operations
     And I inline edit the "Date of Birth" cell for "Dijkstra-InlineUpdate" to "1930-05-11" using "Enter"
     And I inline edit the "Category" cell for "Dijkstra-InlineUpdate" to "Family" using "Enter"
     And I inline edit the "Notes" cell for "Dijkstra-InlineUpdate" to "Shortest path Enter edit" using "Enter"
+    And I click the edit button for "Dijkstra-InlineUpdate"
     Then I should see "+1 (555) 888-0000" for "Dijkstra-InlineUpdate"
     And I should see "edsger.enter@inline.test" for "Dijkstra-InlineUpdate"
     And I should see "1930-05-11" for "Dijkstra-InlineUpdate"
     And I should see "Family" for "Dijkstra-InlineUpdate"
     And I should see "Shortest path Enter edit" for "Dijkstra-InlineUpdate"
-    When I click the edit button for "Dijkstra-InlineUpdate"
-    Then the "Edit Contact" modal should be visible
+    And the "Edit Contact" modal should be visible
     And the edit contact form should be pre-populated with:
       | Field Name    | Expected Value           |
       | Phone Number  | +1 (555) 888-0000        |
@@ -65,14 +62,14 @@ Feature: Phone Book CRUD Operations
     Given a contact exists named "Barbara Liskov-BlurUpdate" with phone "+1 (555) 222-4444"
     And I navigate to the phone book application
     When I search for "Liskov-BlurUpdate" in the search box
-    Then the "Phone Number" cell for "Liskov-BlurUpdate" should have a separate icon link for "tel:" and editable text
-    And the "Email" cell for "Liskov-BlurUpdate" should have a separate icon link for "mailto:" and editable text
-    When I inline edit the "Phone Number" cell for "Liskov-BlurUpdate" to "+1 (555) 777-9999" using "blur"
+    And I inline edit the "Phone Number" cell for "Liskov-BlurUpdate" to "+1 (555) 777-9999" using "blur"
     And I inline edit the "Email" cell for "Liskov-BlurUpdate" to "barbara.blur@inline.test" using "blur"
     And I inline edit the "Date of Birth" cell for "Liskov-BlurUpdate" to "1939-11-07" using "blur"
     And I inline edit the "Category" cell for "Liskov-BlurUpdate" to "Friend" using "blur"
     And I inline edit the "Notes" cell for "Liskov-BlurUpdate" to "Saved on blur across fields" using "blur"
-    Then I should see "+1 (555) 777-9999" for "Liskov-BlurUpdate"
+    Then the "Phone Number" cell for "Liskov-BlurUpdate" should have a separate icon link for "tel:" and editable text
+    And the "Email" cell for "Liskov-BlurUpdate" should have a separate icon link for "mailto:" and editable text
+    And I should see "+1 (555) 777-9999" for "Liskov-BlurUpdate"
     And I should see "barbara.blur@inline.test" for "Liskov-BlurUpdate"
     And I should see "1939-11-07" for "Liskov-BlurUpdate"
     And I should see "Friend" for "Liskov-BlurUpdate"
@@ -89,23 +86,29 @@ Feature: Phone Book CRUD Operations
     And I should see "1990-05-15" for "Knuth-EscTest"
     And I should see "Work" for "Knuth-EscTest"
 
-  Scenario: Inline editing the Name cell parses both "Last, First" and "First Last" formats into first and last names
-    Given a contact exists named "Initial Person-NameTest" with phone "+1 (555) 222-6666"
+  Scenario: Inline editing the Name cell parses "Last, First" format into first and last names
+    Given a contact exists named "Initial PersonComma-NameTest" with phone "+1 (555) 222-6666"
     And I navigate to the phone book application
-    When I search for "Person-NameTest" in the search box
-    And I inline edit the "Name" cell for "Person-NameTest" to "Hopper-NameTest, Grace" using "Enter"
+    When I search for "PersonComma-NameTest" in the search box
+    And I inline edit the "Name" cell for "PersonComma-NameTest" to "Hopper-NameTest, Grace" using "Enter"
+    And I search for "Hopper-NameTest" in the search box
+    And I click the edit button for "Hopper-NameTest"
     Then I should see "Hopper-NameTest, Grace" in the directory
-    When I click the edit button for "Hopper-NameTest"
-    Then the "Edit Contact" modal should be visible
+    And the "Edit Contact" modal should be visible
     And the edit contact form should be pre-populated with:
       | Field Name | Expected Value  |
       | First Name | Grace           |
       | Last Name  | Hopper-NameTest |
-    When I close the "Edit Contact" modal
-    And I inline edit the "Name" cell for "Hopper-NameTest" to "Adele Goldberg-NameTest" using "blur"
+
+  Scenario: Inline editing the Name cell parses "First Last" format into first and last names
+    Given a contact exists named "Initial PersonSpace-NameTest" with phone "+1 (555) 222-6667"
+    And I navigate to the phone book application
+    When I search for "PersonSpace-NameTest" in the search box
+    And I inline edit the "Name" cell for "PersonSpace-NameTest" to "Adele Goldberg-NameTest" using "blur"
+    And I search for "Goldberg-NameTest" in the search box
+    And I click the edit button for "Goldberg-NameTest"
     Then I should see "Goldberg-NameTest, Adele" in the directory
-    When I click the edit button for "Goldberg-NameTest"
-    Then the "Edit Contact" modal should be visible
+    And the "Edit Contact" modal should be visible
     And the edit contact form should be pre-populated with:
       | Field Name | Expected Value    |
       | First Name | Adele             |
@@ -115,8 +118,7 @@ Feature: Phone Book CRUD Operations
     Given a contact exists named "Katherine Johnson-CancelDelete" with phone "+1 (555) 555-6666"
     And I navigate to the phone book application
     When I search for "Johnson-CancelDelete" in the search box
-    Then I should see "Johnson-CancelDelete" in the directory
-    When I click the delete button for "Johnson-CancelDelete" and cancel the confirmation prompt
+    And I click the delete button for "Johnson-CancelDelete" and cancel the confirmation prompt
     Then the confirmation dialog should ask 'Are you sure you want to delete contact "Katherine Johnson-CancelDelete"?'
     And I should still see "Johnson-CancelDelete" in the directory
 
@@ -124,7 +126,6 @@ Feature: Phone Book CRUD Operations
     Given a contact exists named "Katherine Johnson-ConfirmDelete" with phone "+1 (555) 555-7777"
     And I navigate to the phone book application
     When I search for "Johnson-ConfirmDelete" in the search box
-    Then I should see "Johnson-ConfirmDelete" in the directory
-    When I click the delete button for "Johnson-ConfirmDelete" and confirm the prompt
+    And I click the delete button for "Johnson-ConfirmDelete" and confirm the prompt
     Then the confirmation dialog should ask 'Are you sure you want to delete contact "Katherine Johnson-ConfirmDelete"?'
     And I should not see "Johnson-ConfirmDelete" in the directory

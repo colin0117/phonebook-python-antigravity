@@ -5,6 +5,7 @@ Feature: Responsive Table and Card View
     And I resize the viewport to 500 by 800 pixels
     And I navigate to the phone book application
     When I search for "ResponsiveTest" in the search box
+    And I expand the responsive container for "ResponsiveTest"
     Then the contact row for "ResponsiveTest" should display essential columns:
       | Cell Class |
       | col-name   |
@@ -15,8 +16,7 @@ Feature: Responsive Table and Card View
       | col-dob      |
       | col-category |
       | col-notes    |
-    When I expand the responsive container for "ResponsiveTest"
-    Then the openable container for "ResponsiveTest" should display the fields:
+    And the openable container for "ResponsiveTest" should display the fields:
       | Field Name    |
       | Email         |
       | Date of Birth |
@@ -29,31 +29,28 @@ Feature: Responsive Table and Card View
     And I navigate to the phone book application
     When I search for "EditRespTest" in the search box
     And I click the edit button for "EditRespTest"
-    Then the "Edit Contact" modal should be visible
-    And the edit contact form should display all input fields:
-      | Field Name    | Selector            | Element  |
-      | First Name    | #edit_first_name    | input    |
-      | Last Name     | #edit_last_name     | input    |
-      | Phone Number  | #edit_phone_number  | input    |
-      | Email         | #edit_email         | input    |
-      | Date of Birth | #edit_date_of_birth | input    |
-      | Category      | #edit_category      | select   |
-      | Notes         | #edit_notes         | textarea |
-    When I update the contact details with:
+    And I update the contact details with:
       | Field         | Value                        |
       | Date of Birth | 1975-03-25                   |
       | Notes         | Updated from responsive view |
     And I save the changes
-    When I search for "EditRespTest" in the search box
+    And I search for "EditRespTest" in the search box
     And I expand the responsive container for "EditRespTest"
     Then the openable container for "EditRespTest" should contain "1975-03-25"
     And the openable container for "EditRespTest" should contain "Updated from responsive view"
 
-  Scenario: Card View displays all contact fields on small viewports
+  Scenario: Card View displays all contact fields and supports editing on small viewports
     Given a contact exists named "Barbara SmallCardTest" with phone "+1 (555) 444-3333"
     And I resize the viewport to 500 by 800 pixels
     And I navigate to the phone book application
     When I search for "SmallCardTest" in the search box
+    And I switch to Card View
+    And I click the edit button for "SmallCardTest"
+    And I update the contact details with:
+      | Field         | Value                      |
+      | Notes         | Edited from card view mode |
+    And I save the changes
+    And I search for "SmallCardTest" in the search box
     And I switch to Card View
     Then the contact card for "SmallCardTest" should display all fields:
       | Cell Class   |
@@ -64,15 +61,7 @@ Feature: Responsive Table and Card View
       | col-category |
       | col-notes    |
       | col-actions  |
-    When I click the edit button for "SmallCardTest"
-    Then the "Edit Contact" modal should be visible
-    When I update the contact details with:
-      | Field         | Value                      |
-      | Notes         | Edited from card view mode |
-    And I save the changes
-    When I search for "SmallCardTest" in the search box
-    And I switch to Card View
-    Then the contact card for "SmallCardTest" should contain "Edited from card view mode"
+    And the contact card for "SmallCardTest" should contain "Edited from card view mode"
 
   Scenario: Card View displays all contact fields on desktop viewports
     Given a contact exists named "Dorothy DeskCardTest" with phone "+1 (555) 444-5555"

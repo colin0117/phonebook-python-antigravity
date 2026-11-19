@@ -47,7 +47,8 @@ When a contact is added or edited with a **Date of Birth**, a modal pop-up immed
 
 ### 🔌 RESTful API
 - `GET /api/contacts`: Retrieve all contacts.
-- `GET /api/contacts/duplicates`: Retrieve grouped duplicate contacts across normalized `Name`, `Phone Number`, and `Email`.
+- `GET /api/contacts/duplicates`: Retrieve grouped duplicate contacts across the fields enabled in the MySQL `settings` table (`Name`, `Phone Number`, `Email`, `Date of Birth`).
+- `GET /api/settings` & `PUT /api/settings`: Retrieve or update customer database configuration settings (`settings_display_enabled`, `duplicates_enabled`, `duplicates_match_name`, `duplicates_match_phone`, `duplicates_match_email`, `duplicates_match_dob`).
 - `POST /api/contacts`: Create a new contact (validates required fields, returns contact ID, `dob_fact`, and `dob_details`).
 - `PUT /api/contacts/<id>`: Update an existing contact (validates required fields, returns updated `dob_details`).
 - `DELETE /api/contacts/<id>`: Delete an existing contact.
@@ -116,6 +117,8 @@ The project includes two complementary automated testing suites under `playwrigh
 Located in [`playwright/tests/api/`](./playwright/tests/api/):
 
 - **[`contacts-crud.spec.ts`](./playwright/tests/api/contacts-crud.spec.ts)**: Full `GET`, `POST`, `PUT`, and `DELETE` lifecycle verification on `/api/contacts`.
+- **[`settings.spec.ts`](./playwright/tests/api/settings.spec.ts)**: Verification of `GET /api/settings` schema/metadata and `PUT /api/settings` boolean updates and persistence.
+- **[`duplicates.spec.ts`](./playwright/tests/api/duplicates.spec.ts)**: Verification of `GET /api/contacts/duplicates` grouping across normalized Name, Phone Number, Email, and Date of Birth according to active database settings.
 - **[`contacts-validation.spec.ts`](./playwright/tests/api/contacts-validation.spec.ts)**: Mandatory field checks, empty/whitespace rejection (`400`), optional field defaults, and non-existent ID handling (`404`).
 - **[`dob-facts.spec.ts`](./playwright/tests/api/dob-facts.spec.ts)**: Star sign calculation, astrological symbols/traits, historical facts, and invalid date rejection (`400`) on `/api/dob-facts`.
 - **[`contacts-security-boundary.spec.ts`](./playwright/tests/api/contacts-security-boundary.spec.ts)**: Calendar date validation (`2025-02-31`), `VARCHAR(100)` boundary enforcement, parameterized SQL injection defense, Unicode/`utf8mb4` fidelity, and safe script tag handling.
@@ -126,7 +129,8 @@ Located in [`playwright/tests/api/`](./playwright/tests/api/):
 Located in [`playwright/features/`](./playwright/features/):
 
 - **[`crud.feature`](./playwright/features/contacts/crud.feature)**: Directory loading, adding/editing contacts, inline cell editing, and delete confirmation dialog handling.
-- **[`duplicates.feature`](./playwright/features/contacts/duplicates.feature)**: Duplicate contact detection, in-row `Duplicate` warning badges, and the grouped **Duplicate Contacts** modal.
+- **[`duplicates.feature`](./playwright/features/contacts/duplicates.feature)**: Database-settings-driven duplicate contact detection (`duplicates_enabled`, `duplicates_match_name`, `duplicates_match_phone`, `duplicates_match_email`, `duplicates_match_dob`), dynamically skipping or adapting assertions to match the active customer configuration.
+- **[`settings.feature`](./playwright/features/contacts/settings.feature)**: Header **Settings** button visibility (`settings_display_enabled`), initial **Read-Only** modal view, entering **Editing** mode to toggle boolean settings, and verifying both cancelled and confirmed **Save Settings** prompts against live MySQL settings and page UI elements.
 - **[`summary_stats.feature`](./playwright/features/contacts/summary_stats.feature)**: Header summary bar totals and category breakdown cards (`Total Contacts`, `Work`, `Family`, `Friends & Others`) across create, category-change, and delete flows.
 - **[`search_builder.feature`](./playwright/features/contacts/search_builder.feature)**: Side-by-side **SearchPanes** and **SearchBuilder** layout, toolbar toggling, custom query conditions, and combined filtering.
 - **[`dob_facts.feature`](./playwright/features/birthday-insights/dob_facts.feature)**: Centered Birthday Insights modal display, web facts cycling, and star signs.
@@ -164,7 +168,8 @@ npx cucumber-js --tags @colin
 npx cucumber-js --tags "@smoke and not @wip"
 
 # Generate & view HTML reports
-npm run test:report         # Cucumber HTML report
+npm run test:report         # Cucumber HTML report (reports/cucumber-report.html)
+npm run test:api:report     # Playwright API HTML report (reports/playwright-html/index.html)
 ```
 
 #### Pausing a BDD Test for Manual Inspection

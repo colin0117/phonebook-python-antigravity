@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
 import pymysql
 
-from db import init_db, get_connection
+from db import init_db, get_connection, get_settings, get_settings_rows, DEFAULT_SETTINGS, parse_bool_setting
 from dob_facts import get_dob_fact, get_dob_details
 
 
@@ -21,28 +21,54 @@ def normalize_phone_for_dup(phone_str):
     return digits if digits else raw.lower()
 
 
-def find_duplicate_groups(rows):
-    """Finds duplicate contact groups across Name, Phone Number, and Email."""
+def find_duplicate_groups(rows, settings=None):
+    """Finds duplicate contact groups across configured fields (Name, Phone Number, Email, Date of Birth)."""
+    active_settings = dict(DEFAULT_SETTINGS)
+    if settings:
+        active_settings.update(settings)
+
+    if not active_settings.get("duplicates_enabled", True):
+        return {
+            "duplicate_group_count": 0,
+            "duplicate_contact_ids": [],
+            "groups": [],
+            "settings": active_settings
+        }
+
+    match_name = active_settings.get("duplicates_match_name", True)
+    match_phone = active_settings.get("duplicates_match_phone", True)
+    match_email = active_settings.get("duplicates_match_email", True)
+    match_dob = active_settings.get("duplicates_match_dob", False)
+
     name_buckets = {}
     phone_buckets = {}
     email_buckets = {}
+    dob_buckets = {}
 
     for row in rows:
-        first = (row.get("first_name") or "").strip()
-        last = (row.get("last_name") or "").strip()
-        if first and last:
-            name_key = f"{first.lower()} {last.lower()}"
-            name_buckets.setdefault(name_key, []).append(row)
+        if match_name:
+            first = (row.get("first_name") or "").strip()
+            last = (row.get("last_name") or "").strip()
+            if first and last:
+                name_key = f"{first.lower()} {last.lower()}"
+                name_buckets.setdefault(name_key, []).append(row)
 
-        phone_raw = (row.get("phone_number") or "").strip()
-        phone_key = normalize_phone_for_dup(phone_raw)
-        if phone_key:
-            phone_buckets.setdefault(phone_key, []).append(row)
+        if match_phone:
+            phone_raw = (row.get("phone_number") or "").strip()
+            phone_key = normalize_phone_for_dup(phone_raw)
+            if phone_key:
+                phone_buckets.setdefault(phone_key, []).append(row)
 
-        email_raw = (row.get("email") or "").strip()
-        if email_raw and email_raw.lower() != "none":
-            email_key = email_raw.lower()
-            email_buckets.setdefault(email_key, []).append(row)
+        if match_email:
+            email_raw = (row.get("email") or "").strip()
+            if email_raw and email_raw.lower() != "none":
+                email_key = email_raw.lower()
+                email_buckets.setdefault(email_key, []).append(row)
+
+        if match_dob:
+            dob_raw = str(row.get("date_of_birth") or "").strip()
+            if dob_raw and dob_raw.lower() != "none":
+                dob_buckets.setdefault(dob_raw, []).append(row)
 
     groups = []
     duplicate_ids = set()
@@ -81,10 +107,22 @@ def find_duplicate_groups(rows):
             for c in items:
                 duplicate_ids.add(c["id"])
 
+    for key, items in dob_buckets.items():
+        if len(items) > 1:
+            groups.append({
+                "field": "Date of Birth",
+                "match_key": key,
+                "display_value": str(items[0].get("date_of_birth") or key),
+                "contacts": items
+            })
+            for c in items:
+                duplicate_ids.add(c["id"])
+
     return {
         "duplicate_group_count": len(groups),
         "duplicate_contact_ids": sorted(list(duplicate_ids)),
-        "groups": groups
+        "groups": groups,
+        "settings": active_settings
     }
 
 env_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -105,6 +143,7 @@ def index():
     """Renders the main phone book page."""
     contacts = []
     error = None
+    settings = get_settings()
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
@@ -113,7 +152,40 @@ def index():
     except Exception as e:
         error = str(e)
     
-    return render_template("index.html", contacts=contacts, db_error=error)
+    return render_template("index.html", contacts=contacts, db_error=error, settings=settings)
+
+
+@app.route("/api/settings", methods=["GET"])
+def get_settings_api():
+    """Returns active customer database settings."""
+    try:
+        settings = get_settings()
+        items = get_settings_rows()
+        return jsonify({"status": "success", "settings": settings, "items": items})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/settings", methods=["PUT", "POST"])
+def update_settings_api():
+    """Updates one or more settings in the MySQL settings table."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                for key, val in payload.items():
+                    if key in DEFAULT_SETTINGS:
+                        str_val = "true" if parse_bool_setting(val) else "false"
+                    else:
+                        str_val = str(val)
+                    cursor.execute("""
+                        INSERT INTO settings (setting_key, setting_value)
+                        VALUES (%s, %s)
+                        ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+                    """, (key, str_val))
+        return jsonify({"status": "success", "settings": get_settings()})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/contacts", methods=["GET"])
@@ -137,8 +209,9 @@ def get_contacts():
 
 @app.route("/api/contacts/duplicates", methods=["GET"])
 def get_duplicate_contacts():
-    """Returns duplicate contact groups across Name, Phone Number, and Email."""
+    """Returns duplicate contact groups across configured fields."""
     try:
+        settings = get_settings()
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT * FROM contacts ORDER BY last_name ASC, first_name ASC;")
@@ -148,7 +221,7 @@ def get_duplicate_contacts():
                         row["created_at"] = row["created_at"].strftime("%Y-%m-%d %H:%M")
                     if "date_of_birth" in row and row["date_of_birth"]:
                         row["date_of_birth"] = str(row["date_of_birth"])
-                dup_info = find_duplicate_groups(rows)
+                dup_info = find_duplicate_groups(rows, settings=settings)
                 return jsonify({"status": "success", **dup_info})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500

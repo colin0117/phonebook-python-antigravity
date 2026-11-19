@@ -33,6 +33,13 @@ export class PhoneBookPage extends BasePage {
   readonly duplicatesCountBadge: Locator;
   readonly duplicatesModal: Locator;
   readonly duplicatesGroupsContainer: Locator;
+  readonly openSettingsModalButton: Locator;
+  readonly settingsModal: Locator;
+  readonly settingsTableBody: Locator;
+  readonly settingsModeBadge: Locator;
+  readonly editSettingsButton: Locator;
+  readonly saveSettingsButton: Locator;
+  readonly cancelEditSettingsButton: Locator;
   readonly searchPanesContainer: Locator;
   readonly searchBuilderContainer: Locator;
   readonly searchToolsLayoutRow: Locator;
@@ -92,6 +99,13 @@ export class PhoneBookPage extends BasePage {
     this.duplicatesCountBadge = page.locator('#duplicatesCountBadge');
     this.duplicatesModal = page.locator('#duplicatesModal');
     this.duplicatesGroupsContainer = page.locator('#duplicatesGroupsContainer');
+    this.openSettingsModalButton = page.locator('#openSettingsModalBtn');
+    this.settingsModal = page.locator('#settingsModal');
+    this.settingsTableBody = page.locator('#settingsTableBody');
+    this.settingsModeBadge = page.locator('#settingsModeBadge');
+    this.editSettingsButton = page.locator('#editSettingsBtn');
+    this.saveSettingsButton = page.locator('#saveSettingsBtn');
+    this.cancelEditSettingsButton = page.locator('#cancelEditSettingsBtn');
     this.searchPanesContainer = page.locator('.dtsp-panesContainer');
     this.searchBuilderContainer = page.locator('.dtsb-searchBuilder');
     this.searchToolsLayoutRow = page
@@ -376,12 +390,16 @@ export class PhoneBookPage extends BasePage {
 
   async toggleFilterPanes() {
     await this.dismissDobFactModalIfOpen();
+    const wasVisible = await this.searchPanesContainer.isVisible();
     await this.togglePanesButton.click();
+    await this.searchPanesContainer.waitFor({ state: wasVisible ? 'hidden' : 'visible' });
   }
 
   async toggleSearchBuilder() {
     await this.dismissDobFactModalIfOpen();
+    const wasVisible = await this.searchBuilderContainer.isVisible();
     await this.toggleSearchBuilderButton.click();
+    await this.searchBuilderContainer.waitFor({ state: wasVisible ? 'hidden' : 'visible' });
   }
 
   getCellForContact(contactName: string, fieldName: string): Locator {
@@ -490,6 +508,55 @@ export class PhoneBookPage extends BasePage {
     await this.dismissDobFactModalIfOpen();
     await this.openDuplicatesModalButton.click();
     await this.duplicatesModal.waitFor({ state: 'visible' });
+  }
+
+  async openSettingsModal() {
+    await this.dismissDobFactModalIfOpen();
+    await this.openSettingsModalButton.click();
+    await this.settingsModal.waitFor({ state: 'visible' });
+    await this.settingsTableBody.locator('tr[data-setting-key]').first().waitFor({ state: 'visible' });
+  }
+
+  async clickEditSettings() {
+    await this.editSettingsButton.click();
+    await expect(this.settingsModeBadge).toContainText('Editing');
+  }
+
+  async toggleSettingInModal(settingKey: string): Promise<string> {
+    const toggleBtn = this.settingsTableBody.locator(`tr[data-setting-key="${settingKey}"] .setting-toggle-btn`);
+    await toggleBtn.waitFor({ state: 'visible' });
+    await toggleBtn.click();
+    return (await toggleBtn.getAttribute('data-value')) || 'false';
+  }
+
+  async clickSaveSettingsAndHandleDialog(accept: boolean): Promise<string> {
+    let dialogMessage = '';
+    const dialogPromise = new Promise<string>((resolve) => {
+      this.page.once('dialog', async (dialog) => {
+        dialogMessage = dialog.message();
+        if (accept) {
+          await dialog.accept();
+        } else {
+          await dialog.dismiss();
+        }
+        resolve(dialogMessage);
+      });
+    });
+
+    if (accept) {
+      const responsePromise = this.page.waitForResponse(
+        res => res.url().includes('/api/settings') && res.request().method() === 'PUT'
+      );
+      await this.saveSettingsButton.click();
+      await dialogPromise;
+      await responsePromise;
+      await expect(this.settingsModeBadge).toContainText('Read-Only');
+    } else {
+      await this.saveSettingsButton.click();
+      await dialogPromise;
+    }
+
+    return dialogMessage;
   }
 }
 

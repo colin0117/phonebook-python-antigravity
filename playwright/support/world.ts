@@ -1,7 +1,7 @@
 import { setWorldConstructor, World, IWorldOptions } from '@cucumber/cucumber';
 import { BrowserContext, Page, APIResponse } from '@playwright/test';
 import { PhoneBookPage } from '../pages/phone-book.page';
-import { ApiHelper } from '../utils/api-helper';
+import { ApiHelper, AppSettings } from '../utils/api-helper';
 import { BddFixtures } from '../fixtures/bdd-fixtures';
 
 export interface CustomWorld extends World {
@@ -10,6 +10,9 @@ export interface CustomWorld extends World {
   phoneBookPage: PhoneBookPage;
   api: ApiHelper;
   fixtures: BddFixtures;
+  settings: AppSettings;
+  initialSettings: AppSettings;
+  settingsModified?: boolean;
   createdContactIds: number[];
   initialFactText?: string;
   lastApiResponse?: APIResponse;
@@ -23,6 +26,9 @@ export class CustomWorldClass extends World implements CustomWorld {
   phoneBookPage!: PhoneBookPage;
   api!: ApiHelper;
   fixtures!: BddFixtures;
+  settings!: AppSettings;
+  initialSettings!: AppSettings;
+  settingsModified?: boolean;
   createdContactIds: number[] = [];
   initialFactText?: string;
   lastApiResponse?: APIResponse;

@@ -111,3 +111,85 @@ def init_db():
                 print(f"Successfully seeded {len(records)} sample contacts!")
             else:
                 print(f"Database already contains {count} contacts. Skipping seeding.")
+
+            # 4. Ensure settings table exists and seed default customer configuration settings
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS settings (
+                    setting_key VARCHAR(100) PRIMARY KEY,
+                    setting_value VARCHAR(500) NOT NULL,
+                    description VARCHAR(255),
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """)
+            default_settings = [
+                ("settings_display_enabled", "true", "Show the Settings button and read-only Application Settings modal in the UI"),
+                ("duplicates_enabled", "true", "Show Duplicates button, in-row badges, and modal"),
+                ("duplicates_match_name", "true", "Flag contacts with matching First + Last Name"),
+                ("duplicates_match_phone", "true", "Flag contacts with matching normalized Phone Number"),
+                ("duplicates_match_email", "true", "Flag contacts with matching Email address"),
+                ("duplicates_match_dob", "false", "Flag contacts with matching Date of Birth"),
+            ]
+            cursor.executemany("""
+                INSERT IGNORE INTO settings (setting_key, setting_value, description)
+                VALUES (%s, %s, %s);
+            """, default_settings)
+            print("Table 'settings' and default settings ensured.")
+
+
+DEFAULT_SETTINGS = {
+    "settings_display_enabled": True,
+    "duplicates_enabled": True,
+    "duplicates_match_name": True,
+    "duplicates_match_phone": True,
+    "duplicates_match_email": True,
+    "duplicates_match_dob": False,
+}
+
+
+def parse_bool_setting(val, default=False):
+    if isinstance(val, bool):
+        return val
+    if val is None:
+        return default
+    return str(val).strip().lower() in ("true", "1", "yes", "on")
+
+
+def get_settings():
+    """Fetches current application settings from the MySQL settings table."""
+    settings = dict(DEFAULT_SETTINGS)
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT setting_key, setting_value FROM settings;")
+                for row in cursor.fetchall():
+                    key = row["setting_key"]
+                    val = row["setting_value"]
+                    if key in DEFAULT_SETTINGS:
+                        settings[key] = parse_bool_setting(val, DEFAULT_SETTINGS[key])
+                    else:
+                        settings[key] = val
+    except Exception:
+        pass
+    return settings
+
+
+def get_settings_rows():
+    """Fetches detailed rows from the MySQL settings table for read-only display."""
+    rows = []
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT setting_key, setting_value, description, updated_at FROM settings ORDER BY setting_key ASC;")
+                for r in cursor.fetchall():
+                    key = r["setting_key"]
+                    val = r["setting_value"]
+                    rows.append({
+                        "setting_key": key,
+                        "setting_value": val,
+                        "enabled": parse_bool_setting(val) if key in DEFAULT_SETTINGS else None,
+                        "description": r.get("description") or "",
+                        "updated_at": r["updated_at"].strftime("%Y-%m-%d %H:%M") if r.get("updated_at") else ""
+                    })
+    except Exception:
+        pass
+    return rows

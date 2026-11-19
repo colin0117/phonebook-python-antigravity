@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" class="theme-light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.bulma.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css?v=9">
+    <link rel="stylesheet" href="/static/style.css?v=11">
 </head>
 <body>
 
@@ -38,7 +38,10 @@
                 </span>
             </div>
             <div class="navbar-end is-flex is-align-items-center">
-                <div class="navbar-item">
+                <div class="navbar-item is-flex is-align-items-center" style="gap: 0.5rem;">
+                    <button type="button" class="button is-primary is-light {% if settings and not settings.settings_display_enabled %}is-hidden{% endif %}" id="openSettingsModalBtn" title="View database settings">
+                        <i class="bi bi-gear-fill mr-1"></i> Settings
+                    </button>
                     <button class="button is-light has-text-primary has-text-weight-semibold" id="openAddModalBtn">
                         <i class="bi bi-person-plus-fill mr-1"></i> Add Contact
                     </button>
@@ -165,7 +168,7 @@
                     </button>
 
                     <!-- Duplicates Check Button -->
-                    <button type="button" class="button is-light is-small" id="openDuplicatesModalBtn" title="Review duplicate contacts">
+                    <button type="button" class="button is-light is-small {% if settings and not settings.duplicates_enabled %}is-hidden{% endif %}" id="openDuplicatesModalBtn" title="Review duplicate contacts">
                         <i class="bi bi-intersect mr-1"></i> Duplicates
                         <span class="tag is-rounded is-light ml-1" id="duplicatesCountBadge">0</span>
                     </button>
@@ -476,6 +479,58 @@
         </div>
     </div>
 
+    <!-- Modal: Read/Write Application Database Settings -->
+    <div class="modal" id="settingsModal" tabindex="-1">
+        <div class="modal-background" data-close-modal></div>
+        <div class="modal-card" style="max-width: 720px; width: 95%;">
+            <header class="modal-card-head" style="background: linear-gradient(135deg, #334155, #1e293b); color: #fff;">
+                <p class="modal-card-title has-text-white has-text-weight-bold is-size-5 mb-0 is-flex is-align-items-center" style="gap: 0.5rem;">
+                    <i class="bi bi-gear-fill"></i> <span>Application Settings</span>
+                </p>
+                <button type="button" class="delete is-medium" aria-label="close" data-close-modal></button>
+            </header>
+            <section class="modal-card-body p-4" id="settingsModalBody" style="background-color: #fbfbfb;">
+                <div id="settingsModalAlert" class="notification is-danger is-light is-hidden mb-3 py-2 px-3 is-size-7"></div>
+                <div class="is-flex is-justify-content-between is-align-items-center mb-3">
+                    <p class="has-text-grey is-size-7 mb-0">
+                        Active customer configuration loaded from the MySQL <code>settings</code> table.
+                    </p>
+                    <span class="tag is-dark is-light is-size-7" id="settingsModeBadge"><i class="bi bi-lock-fill mr-1"></i>Read-Only</span>
+                </div>
+                <div class="box p-0" style="overflow: hidden;">
+                    <table class="table is-fullwidth is-striped is-hoverable is-size-7 mb-0" id="settingsTable">
+                        <thead>
+                            <tr>
+                                <th>Setting Key</th>
+                                <th>Description</th>
+                                <th class="has-text-centered">Current Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="settingsTableBody">
+                            <tr>
+                                <td colspan="3" class="has-text-centered has-text-grey py-4">Loading settings...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <footer class="modal-card-foot is-justify-content-between">
+                <div>
+                    <button type="button" class="button is-info is-small" id="editSettingsBtn">
+                        <i class="bi bi-pencil-square mr-1"></i> Edit Settings
+                    </button>
+                    <button type="button" class="button is-primary is-small is-hidden" id="saveSettingsBtn">
+                        <i class="bi bi-check2-circle mr-1"></i> Save Settings
+                    </button>
+                    <button type="button" class="button is-light is-small is-hidden" id="cancelEditSettingsBtn">
+                        Cancel Edit
+                    </button>
+                </div>
+                <button type="button" class="button is-light is-small" id="closeSettingsModalBtn" data-close-modal>Close</button>
+            </footer>
+        </div>
+    </div>
+
     <!-- Scripts: jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
@@ -542,8 +597,8 @@
             // Initialize DataTables with Bulma, SearchPanes, SearchBuilder, sorting, search, pagination, and export buttons
             const table = $('#contactsTable').DataTable({
                 responsive: true,
-                pageLength: 9, // Multiples of 3 look best for 3-column card layouts
-                lengthMenu: [[6, 9, 15, 30, -1], [6, 9, 15, 30, "All"]],
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 order: [[0, 'asc']], // Default sort by Name
                 searchPanes: {
                     cascadePanes: true,
@@ -755,6 +810,7 @@
                             <td class="has-text-weight-semibold">${escapeHtml(c.last_name)}, ${escapeHtml(c.first_name)}</td>
                             <td>${escapeHtml(c.phone_number)}</td>
                             <td>${escapeHtml(c.email || 'None')}</td>
+                            <td>${escapeHtml(c.date_of_birth || '')}</td>
                             <td><span class="tag is-light">${escapeHtml(c.category || 'General')}</span></td>
                         </tr>
                     `).join('');
@@ -781,6 +837,7 @@
                                         <th>Name</th>
                                         <th>Phone Number</th>
                                         <th>Email</th>
+                                        <th>Date of Birth</th>
                                         <th>Category</th>
                                     </tr>
                                 </thead>
@@ -829,6 +886,13 @@
                     const data = await res.json();
                     if (res.ok && data.status === 'success') {
                         latestDuplicatesData = data;
+                        const dupEnabled = data.settings ? Boolean(data.settings.duplicates_enabled) : true;
+                        if (!dupEnabled) {
+                            $('#openDuplicatesModalBtn').addClass('is-hidden');
+                            applyDuplicateRowBadges({ groups: [] });
+                            return;
+                        }
+                        $('#openDuplicatesModalBtn').removeClass('is-hidden');
                         const count = data.duplicate_group_count || 0;
                         $('#duplicatesCountBadge').text(count);
                         if (count > 0) {
@@ -867,6 +931,164 @@
 
             // Initial check for duplicates on page load
             refreshDuplicatesStatus();
+
+            // =========================================================================
+            // Application Settings Modal (Read-Only by default, Editable via Edit button)
+            // =========================================================================
+            let currentSettingsItems = [];
+            let isEditingSettings = false;
+
+            function setSettingsEditMode(editing) {
+                isEditingSettings = editing;
+                $('#settingsModalAlert').addClass('is-hidden').text('');
+                if (editing) {
+                    $('#settingsModeBadge')
+                        .removeClass('is-dark')
+                        .addClass('is-warning has-text-weight-semibold')
+                        .html('<i class="bi bi-pencil-fill mr-1"></i>Editing');
+                    $('#editSettingsBtn').addClass('is-hidden');
+                    $('#saveSettingsBtn').removeClass('is-hidden');
+                    $('#cancelEditSettingsBtn').removeClass('is-hidden');
+                } else {
+                    $('#settingsModeBadge')
+                        .removeClass('is-warning has-text-weight-semibold')
+                        .addClass('is-dark')
+                        .html('<i class="bi bi-lock-fill mr-1"></i>Read-Only');
+                    $('#editSettingsBtn').removeClass('is-hidden');
+                    $('#saveSettingsBtn').addClass('is-hidden');
+                    $('#cancelEditSettingsBtn').addClass('is-hidden');
+                }
+                renderSettingsTableRows();
+            }
+
+            function renderSettingsTableRows() {
+                const $tbody = $('#settingsTableBody');
+                if (!currentSettingsItems || currentSettingsItems.length === 0) {
+                    $tbody.html('<tr><td colspan="3" class="has-text-centered has-text-grey py-4">No settings found in database.</td></tr>');
+                    return;
+                }
+
+                const rowsHtml = currentSettingsItems.map(item => {
+                    const isTrue = item.enabled === true || String(item.setting_value).toLowerCase() === 'true';
+                    const valStr = isTrue ? 'true' : 'false';
+                    let controlHtml = '';
+
+                    if (isEditingSettings) {
+                        controlHtml = `
+                            <button type="button"
+                                    class="button is-small is-rounded setting-toggle-btn ${isTrue ? 'is-success' : 'is-light'}"
+                                    data-setting-key="${escapeHtml(item.setting_key)}"
+                                    data-value="${valStr}"
+                                    aria-pressed="${valStr}">
+                                <i class="bi ${isTrue ? 'bi-toggle-on' : 'bi-toggle-off'} is-size-6 mr-1"></i>
+                                <span class="setting-toggle-text">${valStr}</span>
+                            </button>
+                        `;
+                    } else {
+                        controlHtml = isTrue
+                            ? `<span class="tag is-success is-light has-text-weight-bold setting-readonly-badge"><i class="bi bi-check-circle-fill mr-1"></i>${escapeHtml(item.setting_value)}</span>`
+                            : `<span class="tag is-light has-text-grey has-text-weight-semibold setting-readonly-badge"><i class="bi bi-dash-circle mr-1"></i>${escapeHtml(item.setting_value)}</span>`;
+                    }
+
+                    return `
+                        <tr data-setting-key="${escapeHtml(item.setting_key)}">
+                            <td><code class="has-text-dark has-text-weight-semibold">${escapeHtml(item.setting_key)}</code></td>
+                            <td class="has-text-grey-dark">${escapeHtml(item.description)}</td>
+                            <td class="has-text-centered setting-value-cell">${controlHtml}</td>
+                        </tr>
+                    `;
+                }).join('');
+                $tbody.html(rowsHtml);
+            }
+
+            async function loadSettingsIntoModal() {
+                const $tbody = $('#settingsTableBody');
+                try {
+                    const res = await fetch('/api/settings');
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        currentSettingsItems = data.items || [];
+                        setSettingsEditMode(false);
+                    } else {
+                        $tbody.html('<tr><td colspan="3" class="has-text-centered has-text-danger py-4">Failed to load settings.</td></tr>');
+                    }
+                } catch (err) {
+                    $tbody.html('<tr><td colspan="3" class="has-text-centered has-text-danger py-4">Network error loading settings.</td></tr>');
+                }
+            }
+
+            async function openSettingsModal() {
+                const $tbody = $('#settingsTableBody');
+                $tbody.html('<tr><td colspan="3" class="has-text-centered has-text-grey py-4">Loading settings...</td></tr>');
+                setSettingsEditMode(false);
+                openModal('#settingsModal');
+                await loadSettingsIntoModal();
+            }
+
+            $('#openSettingsModalBtn').on('click', openSettingsModal);
+
+            $('#editSettingsBtn').on('click', function () {
+                setSettingsEditMode(true);
+            });
+
+            $('#cancelEditSettingsBtn').on('click', function () {
+                setSettingsEditMode(false);
+            });
+
+            // Toggle boolean value when a setting toggle button is clicked in Edit mode
+            $('#settingsTableBody').on('click', '.setting-toggle-btn', function () {
+                const $btn = $(this);
+                const currentVal = $btn.attr('data-value') === 'true';
+                const nextVal = !currentVal;
+                const nextStr = nextVal ? 'true' : 'false';
+
+                $btn.attr('data-value', nextStr).attr('aria-pressed', nextStr);
+                $btn.toggleClass('is-success', nextVal).toggleClass('is-light', !nextVal);
+                $btn.find('i.bi').removeClass('bi-toggle-on bi-toggle-off').addClass(nextVal ? 'bi-toggle-on' : 'bi-toggle-off');
+                $btn.find('.setting-toggle-text').text(nextStr);
+            });
+
+            $('#saveSettingsBtn').on('click', async function () {
+                if (!confirm('Are you sure you want to save these application settings changes?')) {
+                    return;
+                }
+
+                const payload = {};
+                $('#settingsTableBody .setting-toggle-btn').each(function () {
+                    const key = $(this).attr('data-setting-key');
+                    const val = $(this).attr('data-value') === 'true';
+                    if (key) {
+                        payload[key] = val;
+                    }
+                });
+
+                const $saveBtn = $('#saveSettingsBtn');
+                $saveBtn.prop('disabled', true).text('Saving...');
+
+                try {
+                    const res = await fetch('/api/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.status === 'success') {
+                        await loadSettingsIntoModal();
+                        await refreshDuplicatesStatus();
+                        if (data.settings && data.settings.settings_display_enabled === false) {
+                            $('#openSettingsModalBtn').addClass('is-hidden');
+                        } else {
+                            $('#openSettingsModalBtn').removeClass('is-hidden');
+                        }
+                    } else {
+                        $('#settingsModalAlert').removeClass('is-hidden').text(data.message || 'Failed to save settings.');
+                    }
+                } catch (err) {
+                    $('#settingsModalAlert').removeClass('is-hidden').text('Network error saving settings.');
+                } finally {
+                    $saveBtn.prop('disabled', false).html('<i class="bi bi-check2-circle mr-1"></i> Save Settings');
+                }
+            });
 
             // Handle Add Contact Form Submission
             $('#addContactForm').on('submit', async function (e) {

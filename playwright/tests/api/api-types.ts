@@ -55,3 +55,44 @@ export interface ContactActionResponse {
   dob_details?: DobDetails;
   dob_fact?: string;
 }
+
+export interface SettingItem {
+  setting_key: string;
+  setting_value: string;
+  enabled: boolean | null;
+  description: string;
+  updated_at?: string;
+}
+
+export interface SettingsMap {
+  settings_display_enabled: boolean;
+  duplicates_enabled: boolean;
+  duplicates_match_name: boolean;
+  duplicates_match_phone: boolean;
+  duplicates_match_email: boolean;
+  duplicates_match_dob: boolean;
+  [key: string]: boolean | string | undefined;
+}
+
+export interface SettingsResponse {
+  status: 'success' | 'error';
+  settings: SettingsMap;
+  items?: SettingItem[];
+  message?: string;
+}
+
+export interface DuplicateGroup {
+  field: 'Name' | 'Phone Number' | 'Email' | 'Date of Birth';
+  match_key: string;
+  display_value: string;
+  contacts: Contact[];
+}
+
+export interface DuplicatesResponse {
+  status: 'success' | 'error';
+  duplicate_group_count: number;
+  duplicate_contact_ids: number[];
+  groups: DuplicateGroup[];
+  settings: SettingsMap;
+  message?: string;
+}

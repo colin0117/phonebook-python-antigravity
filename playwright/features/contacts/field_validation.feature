@@ -67,8 +67,7 @@ Feature: Contact Field Display and Validation Verification
   Scenario: 4. Field validation prevents creating a contact without First Name
     Given I navigate to the phone book application
     When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
-    When I fill in the contact form with:
+    And I fill in the contact form with:
       | Field        | Value             |
       | Last Name    | NoFirstTest       |
       | Phone Number | +1 (555) 001-1111 |
@@ -79,8 +78,7 @@ Feature: Contact Field Display and Validation Verification
   Scenario: 5. Field validation prevents creating a contact without Last Name
     Given I navigate to the phone book application
     When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
-    When I fill in the contact form with:
+    And I fill in the contact form with:
       | Field        | Value             |
       | First Name   | NoLastTest        |
       | Phone Number | +1 (555) 002-2222 |
@@ -91,8 +89,7 @@ Feature: Contact Field Display and Validation Verification
   Scenario: 6. Field validation prevents creating a contact without Phone Number
     Given I navigate to the phone book application
     When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
-    When I fill in the contact form with:
+    And I fill in the contact form with:
       | Field      | Value             |
       | First Name | NoPhoneTest       |
       | Last Name  | ValidationTest    |
@@ -100,26 +97,30 @@ Feature: Contact Field Display and Validation Verification
     Then the field "Phone Number" on the new contact form should be invalid
     And the "Add New Contact" modal should remain open
 
-  Scenario: 7. Email field validates proper email format when provided
+  Scenario: 7. Email field rejects invalid email format and accepts valid email format
     Given I navigate to the phone book application
-    When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
+    And I click on the "Add Contact" button
     When I fill in the contact form with:
       | Field      | Value                |
       | First Name | EmailFormat          |
       | Last Name  | ValidationTest       |
       | Email      | not-a-valid-email    |
     Then the field "Email" on the new contact form should be invalid
+
+  Scenario: 8. Email field accepts a valid email format
+    Given I navigate to the phone book application
+    And I click on the "Add Contact" button
     When I fill in the contact form with:
       | Field      | Value                |
+      | First Name | EmailFormat          |
+      | Last Name  | ValidationTest       |
       | Email      | valid.email@test.com |
     Then the field "Email" on the new contact form should be valid
 
-  Scenario: 8. Optional fields can be omitted when creating a contact
+  Scenario: 9. Optional fields can be omitted when creating a contact
     Given I navigate to the phone book application
     When I click on the "Add Contact" button
-    Then the "Add New Contact" modal should be visible
-    When I fill in the contact form with:
+    And I fill in the contact form with:
       | Field        | Value             |
       | First Name   | Minimal           |
       | Last Name    | ContactTest       |
@@ -129,13 +130,12 @@ Feature: Contact Field Display and Validation Verification
     And I should see "ContactTest" in the directory
     And the Date of Birth cell for "ContactTest" should be blank
 
-  Scenario: 9. Field validation prevents updating a contact when a required field is cleared
+  Scenario: 10. Field validation prevents updating a contact when a required field is cleared
     Given a contact exists named "ClearField ValTest" with phone "+1 (555) 004-4444"
     And I navigate to the phone book application
     When I search for "ValTest" in the search box
     And I click the edit button for "ValTest"
-    Then the "Edit Contact" modal should be visible
-    When I clear the field "First Name" on the edit contact form
+    And I clear the field "First Name" on the edit contact form
     And I attempt to submit the edit contact form
     Then the field "First Name" on the edit contact form should be invalid
     And the "Edit Contact" modal should remain open

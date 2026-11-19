@@ -2,7 +2,7 @@
 
 ## Project Overview
 This repository contains a **Phone Book Directory** web application and its automated testing suites:
-- **Backend (`python/`)**: Python 3 + Flask REST API (`python/app.py`, including duplicate contact detection at `/api/contacts/duplicates`), MySQL database layer (`python/db.py`), and Date of Birth historical facts & star sign engine (`python/dob_facts.py`).
+- **Backend (`python/`)**: Python 3 + Flask REST API (`python/app.py`, including `/api/settings` and settings-driven duplicate contact detection at `/api/contacts/duplicates`), MySQL database layer (`python/db.py`, managing `contacts` and `settings` tables), and Date of Birth historical facts & star sign engine (`python/dob_facts.py`).
 - **Frontend (`python/templates/index.html`, `python/static/style.css`)**: Bulma CSS 1.0.2 UI with DataTables 2.1.8 (inline cell editing alongside the Edit modal form, duplicate contact flagging & review modal, SearchPanes + SearchBuilder side-by-side layout, Responsive child rows, Buttons export, and Table/Card view switcher).
 - **Automated Tests (`playwright/`)**:
   1. **Playwright REST API & Concurrency Suite (`playwright/tests/api/`)**: Fast HTTP-level contract, validation, security/boundary, and 10-user concurrency tests.
@@ -16,7 +16,7 @@ This repository contains a **Phone Book Directory** web application and its auto
 - **Feature Headers**: Keep `Feature: <Title>` on a single line at the top of `.feature` files with **no** multi-line `As a... / I want... / So that...` narrative block underneath. The `alexkrechik.cucumberautocomplete` VS Code extension parses unindented narrative lines as undefined steps and breaks "Go to Definition".
 - **Step Organization**:
   - Put cross-cutting steps (API fixture creation, navigation, directory search, manual pause) in `playwright/step-definitions/common.steps.ts`.
-  - Keep domain-specific steps in their corresponding files (`crud.steps.ts`, `duplicates.steps.ts`, `dob_facts.steps.ts`, `field_validation.steps.ts`, `responsive.steps.ts`, `summary_stats.steps.ts`, `search_builder.steps.ts`).
+  - Keep domain-specific steps in their corresponding files (`crud.steps.ts`, `duplicates.steps.ts`, `settings.steps.ts`, `dob_facts.steps.ts`, `field_validation.steps.ts`, `responsive.steps.ts`, `summary_stats.steps.ts`, `search_builder.steps.ts`).
 - **Playwright Subfolder Execution**: All Node dependencies, Playwright configuration, and Cucumber configuration live exclusively inside `playwright/` (`playwright/package.json`, `playwright/cucumber.js`, `playwright/tsconfig.json`).
 - **Manual Verification Step**: Use `And the tests are paused for manual verification` in any scenario to pause Playwright (`page.pause()`) with no step timeout (`{ timeout: -1 }`). The `Before` hook in `playwright/support/hooks.ts` automatically launches Chromium in headed mode whenever a scenario includes this step.
 

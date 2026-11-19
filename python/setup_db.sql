@@ -20,6 +20,21 @@ CREATE TABLE IF NOT EXISTS `contacts` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `settings` (
+    `setting_key` VARCHAR(100) PRIMARY KEY,
+    `setting_value` VARCHAR(500) NOT NULL,
+    `description` VARCHAR(255),
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`, `description`) VALUES
+('settings_display_enabled', 'true', 'Show the Settings button and read-only Application Settings modal in the UI'),
+('duplicates_enabled', 'true', 'Show Duplicates button, in-row badges, and modal'),
+('duplicates_match_name', 'true', 'Flag contacts with matching First + Last Name'),
+('duplicates_match_phone', 'true', 'Flag contacts with matching normalized Phone Number'),
+('duplicates_match_email', 'true', 'Flag contacts with matching Email address'),
+('duplicates_match_dob', 'false', 'Flag contacts with matching Date of Birth');
+
 -- Sample Seed Data
 INSERT INTO `contacts` (`first_name`, `last_name`, `phone_number`, `email`, `date_of_birth`, `category`, `notes`) VALUES
 ('Alice', 'Johnson', '+1 (555) 234-5678', 'alice.johnson@example.com', '1988-03-15', 'Work', 'Engineering team lead at TechCorp. Available 9am-5pm.'),

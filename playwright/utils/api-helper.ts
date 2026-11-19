@@ -10,6 +10,24 @@ export interface ContactPayload {
   notes?: string;
 }
 
+export interface AppSettings {
+  settings_display_enabled: boolean;
+  duplicates_enabled: boolean;
+  duplicates_match_name: boolean;
+  duplicates_match_phone: boolean;
+  duplicates_match_email: boolean;
+  duplicates_match_dob: boolean;
+  [key: string]: boolean | string | undefined;
+}
+
+export interface SettingItemRow {
+  setting_key: string;
+  setting_value: string;
+  enabled: boolean | null;
+  description: string;
+  updated_at?: string;
+}
+
 export class ApiHelper {
   readonly request: APIRequestContext;
 
@@ -42,6 +60,31 @@ export class ApiHelper {
   async getDobFacts(dob?: string): Promise<APIResponse> {
     const url = dob ? `/api/dob-facts?dob=${encodeURIComponent(dob)}` : '/api/dob-facts';
     return await this.request.get(url);
+  }
+
+  async getSettings(): Promise<AppSettings> {
+    const res = await this.request.get('/api/settings');
+    const body = await res.json();
+    return body.settings || {
+      settings_display_enabled: true,
+      duplicates_enabled: true,
+      duplicates_match_name: true,
+      duplicates_match_phone: true,
+      duplicates_match_email: true,
+      duplicates_match_dob: false
+    };
+  }
+
+  async getSettingsItems(): Promise<SettingItemRow[]> {
+    const res = await this.request.get('/api/settings');
+    const body = await res.json();
+    return body.items || [];
+  }
+
+  async updateSettings(payload: Partial<AppSettings>): Promise<AppSettings> {
+    const res = await this.request.put('/api/settings', { data: payload });
+    const body = await res.json();
+    return body.settings;
   }
 
   async cleanupContactsMatching(filterFn: (lastName: string) => boolean): Promise<number> {

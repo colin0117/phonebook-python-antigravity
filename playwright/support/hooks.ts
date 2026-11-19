@@ -49,6 +49,9 @@ Before(async function (this: CustomWorld, scenario) {
   this.phoneBookPage = new PhoneBookPage(this.page);
   this.api = new ApiHelper(this.context.request);
   this.fixtures = new BddFixtures(this.context.request);
+  this.settings = await this.api.getSettings();
+  this.initialSettings = { ...this.settings };
+  this.settingsModified = false;
   this.createdContactIds = [];
 });
 
@@ -59,6 +62,15 @@ After(async function (this: CustomWorld, scenario) {
       fullPage: true
     });
     this.attach(screenshot, 'image/png');
+  }
+
+  // Teardown: Restore original database settings if modified during scenario
+  if (this.settingsModified && this.initialSettings) {
+    try {
+      await this.api.updateSettings(this.initialSettings);
+    } catch {
+      // Ignore settings restore error on teardown
+    }
   }
 
   // Teardown: Clean up test fixture contacts

@@ -16,10 +16,15 @@ Then('the pop-up should display a fun fact pulled from the web', async function 
   await expect(this.phoneBookPage.dobModalFactText, 'Expected web fact text to be visible').toBeVisible();
   const text = await this.phoneBookPage.dobModalFactText.innerText();
   expect(text.length, 'Expected web fact text to have meaningful content').toBeGreaterThan(10);
-  this.initialFactText = text;
+  if (!this.initialFactText) {
+    this.initialFactText = text;
+  }
 });
 
 When('I click the refresh button for the next fun fact in the pop-up', async function (this: CustomWorld) {
+  await expect(this.phoneBookPage.dobFactModal).toBeVisible({ timeout: 10000 });
+  await expect(this.phoneBookPage.dobModalFactText).toBeVisible();
+  this.initialFactText = await this.phoneBookPage.dobModalFactText.innerText();
   await this.phoneBookPage.btnModalNextDobFact.click();
 });
 
